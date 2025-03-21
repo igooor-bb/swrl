@@ -1,0 +1,23 @@
+included:
+  - Package.swift
+  - Sources
+
+excluded:
+  - .build
+
+disabled_rules:
+  - file_length
+  - type_body_length
+  - function_body_length
+  - function_parameter_count
+  - line_length
+  - identifier_name
+  - todo
+
+opt_in_rules:
+  - empty_count
+  - comment_spacing
+  - force_unwrapping
+  - sorted_imports
+
+warning_threshold: 3
