@@ -6,6 +6,14 @@ A command-line tool for resolving symbols in Swift source files.
 
 Swift Lightweight Resolver (swrl) is a specialized command-line utility designed to analyze and resolve symbols found in Swift source files. It helps developers identify and manage symbol references, making it easier to understand dependencies between different parts of your codebase.
 
+Based on the combination of [SwiftSyntax](https://github.com/swiftlang/swift-syntax) and [IndexStoreDB](https://github.com/swiftlang/indexstore-db).
+
+## Features
+
+- Searching for external symbols in source file.
+- Resolving symbols to identify the modules they came from
+- Beautiful and effective output of the found information
+
 ## Requirements
 
 To build and use this package, you'll need:
@@ -60,6 +68,161 @@ Save results to a file with different name (default is `output.json` in the run 
 ```bash
 swrl MyApp.xcodeproj --pattern "**/*.swift" --output results.json
 ```
+
+## Output Example
+
+<details>
+
+<summary>JSON</summary>
+
+```json
+{
+  "declarations": [
+    {
+      "name": "UserFeedbackHandler",
+      "type": "class"
+    },
+    {
+      "name": "FeedbackFactory",
+      "type": "struct"
+    },
+    {
+      "name": "FeedbackAdapter",
+      "type": "class"
+    }
+  ],
+  "file": "UserFeedbackHandler.swift",
+  "imports": [
+    "FeedbackSDK",
+    "SupportLibrary",
+    "CoreFoundation",
+    "Messaging",
+    "UIKit"
+  ],
+  "module": "FeedbackModule",
+  "symbols": [
+    {
+      "chain": "UserFeedbackHandler",
+      "column": 13,
+      "line": 60,
+      "originModuleName": "FeedbackModule",
+      "originModuleType": "this",
+      "originType": "enum",
+      "symbol": "ConfirmationType"
+    },
+    {
+      "chain": "FeedbackFactory.buildHandler",
+      "column": 10,
+      "line": 20,
+      "originModuleName": "Messaging",
+      "originModuleType": "external",
+      "originType": "protocol",
+      "symbol": "FeedbackDelegate"
+    },
+    {
+      "chain": "FeedbackAdapter.feedbackDidCloseWithReason",
+      "column": 43,
+      "line": 116,
+      "originModuleName": "FeedbackSDK",
+      "originModuleType": "external",
+      "originType": "typealias",
+      "symbol": "FeedbackCloseReason"
+    },
+    {
+      "chain": "FeedbackAdapter",
+      "column": 57,
+      "line": 92,
+      "originModuleName": "FeedbackSDK",
+      "originModuleType": "external",
+      "originType": "protocol",
+      "symbol": "FeedbackProtocol"
+    },
+    {
+      "chain": "FeedbackFactory",
+      "column": 41,
+      "line": 16,
+      "originModuleName": "SupportLibrary",
+      "originModuleType": "external",
+      "originType": "protocol",
+      "symbol": "FeedbackFactoryProtocol"
+    },
+    {
+      "chain": "UserFeedbackHandler",
+      "column": 47,
+      "line": 30,
+      "originModuleName": "Messaging",
+      "originModuleType": "external",
+      "originType": "protocol",
+      "symbol": "FeedbackDelegate"
+    },
+    {
+      "chain": "UserFeedbackHandler.showFeedback",
+      "column": 26,
+      "line": 62,
+      "originModuleName": "FeedbackSDK",
+      "originModuleType": "external",
+      "originType": "struct",
+      "symbol": "FeedbackParameters"
+    },
+    {
+      "chain": "UserFeedbackHandler",
+      "column": 34,
+      "line": 35,
+      "originModuleName": "FeedbackSDK",
+      "originModuleType": "external",
+      "originType": "class",
+      "symbol": "FeedbackFlowCoordinator"
+    },
+    {
+      "chain": "getCloseReason",
+      "column": 26,
+      "line": 122,
+      "originModuleName": "Messaging",
+      "originModuleType": "external",
+      "originType": "enum",
+      "symbol": "FeedbackCloseReason"
+    },
+    {
+      "chain": "UserFeedbackHandler.showFeedback",
+      "column": 27,
+      "line": 73,
+      "originModuleName": "FeedbackSDK",
+      "originModuleType": "external",
+      "originType": "class",
+      "symbol": "FeedbackFlowCoordinator"
+    },
+    {
+      "chain": "UserFeedbackHandler",
+      "column": 27,
+      "line": 33,
+      "originModuleName": "CoreFoundation",
+      "originModuleType": "external",
+      "originType": "protocol",
+      "symbol": "ResolverProtocol"
+    },
+    {
+      "chain": "FeedbackFactory.buildHandler",
+      "column": 19,
+      "line": 19,
+      "originModuleName": "CoreFoundation",
+      "originModuleType": "external",
+      "originType": "protocol",
+      "symbol": "ResolverProtocol"
+    },
+    {
+      "chain": "UserFeedbackHandler.init",
+      "column": 19,
+      "line": 40,
+      "originModuleName": "CoreFoundation",
+      "originModuleType": "external",
+      "originType": "protocol",
+      "symbol": "ResolverProtocol"
+    }
+  ]
+}
+```
+
+</details>
 
 ## Contribution
 
