@@ -9,7 +9,7 @@ import Common
 import Foundation
 import SymbolsResolver
 
-struct FileAnalysisContext {
+struct FileAnalysisContext: Sendable {
 
     // Initial file information
     let file: InputFile
@@ -37,12 +37,26 @@ struct FileAnalysisContext {
 // MARK: - Intermediate Output
 
 extension FileAnalysisContext {
-    func printFileModuleInfo(with logger: Logger) {
+    func printDescription(with logger: Logger) {
+        logger.performStep(number: 1, description: "File Information") {
+            printFileModuleInfo(with: logger)
+        }
+
+        logger.performStep(number: 2, description: "Imports & Dependencies") {
+            printSyntaxAnalysis(with: logger)
+        }
+
+        logger.performStep(number: 3, description: "Symbols Resolution") {
+            printSymbolsResolution(with: logger)
+        }
+    }
+
+    private func printFileModuleInfo(with logger: Logger) {
         logger.bulletPoint(title: "File", message: file.name)
         logger.bulletPoint(title: "Module", message: moduleName)
     }
     
-    func printSyntaxAnalysis(with logger: Logger) {
+    private func printSyntaxAnalysis(with logger: Logger) {
         let importStrings = imports
         let declStrings = declarations.map { decl in
             switch decl.kind {
@@ -63,7 +77,7 @@ extension FileAnalysisContext {
         logger.list(Set(depStrings))
     }
     
-    func printSymbolsResolution(with logger: Logger) {
+    private func printSymbolsResolution(with logger: Logger) {
         let sortedSymbols = resolvedSymbols.sorted { lhs, rhs in
             lhs.targetSymbol.symbolName < rhs.targetSymbol.symbolName
         }

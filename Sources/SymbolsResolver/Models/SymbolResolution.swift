@@ -9,14 +9,14 @@ import Common
 import Foundation
 import struct IndexStoreDB.SymbolOccurrence
 
-public enum ResolvedSymbolOrigin {
+public enum ResolvedSymbolOrigin: Sendable {
     case externalModule(String)
     case internalToModule
     case system
     case unknown
 }
 
-public struct SymbolResolution {
+public struct SymbolResolution: Sendable {
     public let targetSymbol: SyntaxSymbolOccurrence
     public let origin: ResolvedSymbolOrigin
     public let originKind: SymbolDefinitionKind

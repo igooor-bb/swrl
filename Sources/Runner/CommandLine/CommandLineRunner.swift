@@ -1,9 +1,10 @@
 import ArgumentParser
 import Foundation
-import Rainbow
+import SymbolsResolver
+import SyntaxAnalysis
 
 @main
-struct CommandLineRunner: ParsableCommand {
+struct CommandLineRunner: AsyncParsableCommand {
 
     // MARK: Constants
 
@@ -45,17 +46,17 @@ struct CommandLineRunner: ParsableCommand {
 
     // MARK: Execution
 
-    func run() throws {
+    func run() async throws {
         let logger = setupLogger()
         logger.printGreeting()
 
-        let tool = CommandLineTool(logger: logger, project: project)
-        try tool.setup()
+        let resolver = try setupResolver(project: project)
+        await resolver.prewarm()
 
         let totalFiles = try gatherFiles()
         logger.describeProcess(for: totalFiles)
 
-        let outputs = try processFiles(totalFiles, using: tool, logger: logger)
+        let outputs = try await processFiles(totalFiles, resolver: resolver, logger: logger)
 
         let dumper = CommandLineResultDumper()
         let outputFile = output ?? InputFile(argument: Self.defaultOutputFileName)!
@@ -73,10 +74,37 @@ struct CommandLineRunner: ParsableCommand {
     // MARK: Private Helpers
 
     private func setupLogger() -> Logger {
-        let logger = Logger()
+        var logger = Logger()
         logger.setMuted(isSilent)
         logger.setSorted(true)
         return logger
+    }
+
+    private func setupResolver(project: InputFile) throws -> SymbolsResolver {
+        let xcodeSettings = XcodeSettings(shell: BashCommandExecutor())
+        try xcodeSettings.ensureXcodeCommandLineToolsInstalled()
+
+        let derivedDataProvider = ProjectDerivedDataFinder(xcodeSettings: xcodeSettings)
+        let projectDerivedDataURL = try derivedDataProvider.findForProject(at: project.url)
+        let indexStoreURL = try resolveIndexStoreURL(
+            projectDerivedDataURL: projectDerivedDataURL,
+            xcodeSettings: xcodeSettings
+        )
+
+        let databaseName = project.url.deletingPathExtension().lastPathComponent
+        let databaseURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".swrl/\(databaseName)")
+
+        return try SymbolsResolver(
+            storeURL: indexStoreURL,
+            databaseURL: databaseURL,
+            xcodeSettings: xcodeSettings,
+            frameworksAnalyzer: SyntaxSymbolsAnalyzer()
+        )
+    }
+
+    private func resolveIndexStoreURL(projectDerivedDataURL: URL, xcodeSettings: XcodeSettings) throws -> URL {
+        let indexStorePath = try xcodeSettings.relativeIndexStorePath()
+        return projectDerivedDataURL.appendingPathComponent(indexStorePath)
     }
 
     private func gatherFiles() throws -> [InputFile] {
@@ -92,18 +120,47 @@ struct CommandLineRunner: ParsableCommand {
 
     private func processFiles(
         _ files: [InputFile],
-        using tool: CommandLineTool,
+        resolver: SymbolsResolver,
         logger: Logger
-    ) throws -> [OutputModel] {
-        var results: [OutputModel] = []
-        for (index, file) in files.enumerated() {
-            do {
-                let processingResult = try tool.processInputFile(file, at: index, totalCount: files.count)
-                results.append(processingResult)
-            } catch {
-                logger.logError(error)
-            }
+    ) async throws -> [OutputModel] {
+        struct ProcessingResult {
+            let file: InputFile
+            let result: Result<FileAnalysisContext, Error>
         }
-        return results
+
+        return try await withThrowingTaskGroup(of: ProcessingResult.self) { group in
+            for (index, file) in files.enumerated() {
+                group.addTask {
+                    let tool = CommandLineTool(logger: logger, resolver: resolver, project: project)
+
+                    do {
+                        let context = try await tool.processInputFile(file, at: index, totalCount: files.count)
+                        return ProcessingResult(file: file, result: .success(context))
+                    } catch {
+                        return ProcessingResult(file: file, result: .failure(error))
+                    }
+                }
+            }
+
+            var results: [OutputModel] = []
+            for try await processingResult in group {
+                let result = processingResult.result
+
+                switch result {
+                case let .success(context):
+                    try logger.displayFileSection(for: processingResult.file) {
+                        context.printDescription(with: logger)
+                    }
+                    results.append(context.dumpOutput())
+
+                case let .failure(error):
+                    try logger.displayFileSection(for: processingResult.file) {
+                        logger.logError(error)
+                    }
+                }
+            }
+
+            return results
+        }
     }
 }

@@ -12,7 +12,7 @@ protocol LoggerPrintable {
     func print(with logger: Logger)
 }
 
-final class Logger {
+struct Logger: Sendable {
 
     typealias Block<T> = () throws -> T
 
@@ -23,11 +23,11 @@ final class Logger {
 
     // MARK: - Configuration
 
-    func setMuted(_ muted: Bool) {
+    mutating func setMuted(_ muted: Bool) {
         isMuted = muted
     }
 
-    func setSorted(_ sorted: Bool) {
+    mutating func setSorted(_ sorted: Bool) {
         isSorted = sorted
     }
 
@@ -54,8 +54,7 @@ final class Logger {
         log()
     }
 
-    func performStep<T>(number: inout Int, description: String, action: Block<T>) rethrows -> T {
-        defer { number += 1 }
+    func performStep<T>(number: Int, description: String, action: Block<T>) rethrows -> T {
         logStepHeader(number, description: description)
         let result = try action()
         printNewLine()
@@ -77,9 +76,9 @@ final class Logger {
         list(Array(items))
     }
 
-    func displayFileSection<T>(for file: InputFile, at index: Int, total: Int, action: Block<T>) throws -> T {
+    func displayFileSection<T>(for file: InputFile, action: Block<T>) throws -> T {
         printNewLine()
-        logFileHeader(file: file, index: index, total: total)
+        logFileHeader(file: file)
         let result = try action()
         log("(End of analysis for \(file.name))")
         return result
@@ -97,8 +96,8 @@ final class Logger {
         log(" " + String(repeating: "─", count: header.count))
     }
 
-    private func logFileHeader(file: InputFile, index: Int, total: Int) {
-        let header = " File \(index + 1)/\(total): \(file.name) "
+    private func logFileHeader(file: InputFile) {
+        let header = " File: \(file.name) "
         let boxWidth = max(60, header.count + 4)
         let horizontalBorder = String(repeating: "━", count: boxWidth)
         log(("┏" + horizontalBorder + "┓").bold.magenta)

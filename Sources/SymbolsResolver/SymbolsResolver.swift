@@ -20,7 +20,7 @@ enum SymbolResolverError: Error, CustomStringConvertible {
     }
 }
 
-public final class SymbolsResolver {
+public final class SymbolsResolver: @unchecked Sendable {
     
     // MARK: - Nested Types
     
@@ -36,7 +36,6 @@ public final class SymbolsResolver {
 
     private enum Constants {
         static let dataStorePath = "DataStore"
-        static let databaseName = "swrl_indexstore"
     }
 
     private let database: IndexStoreDB
@@ -44,11 +43,10 @@ public final class SymbolsResolver {
 
     public init(
         storeURL: URL,
+        databaseURL: URL,
         xcodeSettings: XcodeSettingsProviding,
         frameworksAnalyzer: FrameworkDefinitionsAnalyzer
     ) throws {
-        let databaseURL = FileManager.default.temporaryDirectory.appendingPathComponent(Constants.databaseName)
-
         let libraryPath = try xcodeSettings.indexStoreLibraryURL()
         let library = try IndexStoreLibrary(dylibPath: libraryPath.path)
 
@@ -68,9 +66,12 @@ public final class SymbolsResolver {
 
     // MARK: Interface
 
-    public func prewarm() {
-        database.pollForUnitChangesAndWait()
-        frameworksIndex.prewarm()
+    public func prewarm() async {
+        async let databaseTask: () = database.pollForUnitChangesAndWait()
+        async let frameworksIndexTask: () = frameworksIndex.prewarm()
+
+        await databaseTask
+        await frameworksIndexTask
     }
 
     public func determineFileModule(fileURL: URL) throws -> String {

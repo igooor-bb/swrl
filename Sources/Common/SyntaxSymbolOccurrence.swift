@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct SyntaxSymbolOccurrence: Hashable {
+public struct SyntaxSymbolOccurrence: Hashable, Sendable {
     public var id: String { String(hashValue) }
     public let symbolName: String
     public let fullyQualifiedName: String?
@@ -30,7 +30,7 @@ public struct SyntaxSymbolOccurrence: Hashable {
     }
 }
 
-public enum SymbolDefinitionKind: String, Hashable {
+public enum SymbolDefinitionKind: String, Hashable, Sendable {
     case `actor`
     case `class`
     case `protocol`
@@ -41,7 +41,7 @@ public enum SymbolDefinitionKind: String, Hashable {
     case unknown
 }
 
-public enum SymbolOccurrenceKind: Hashable {
+public enum SymbolOccurrenceKind: Hashable, Sendable {
     case definition(SymbolDefinitionKind)
     case usage
 
@@ -60,7 +60,7 @@ public enum SymbolOccurrenceKind: Hashable {
     }
 }
 
-public struct SyntaxSymbolLocation: Hashable {
+public struct SyntaxSymbolLocation: Hashable, Sendable {
     public let line: Int
     public let column: Int
 
