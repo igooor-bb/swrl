@@ -35,7 +35,7 @@ The easiest way to install swrl is using the provided Makefile:
 
 ```bash
 # Clone the repository
-git clone https://github.com/username/swrl.git
+git clone https://github.com/igooor-bb/swrl.git
 cd swrl
 
 # Build and install (may require sudo)
