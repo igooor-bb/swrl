@@ -6,6 +6,14 @@ A command-line tool for resolving symbols in Swift source files.
 
 Swift Lightweight Resolver (swrl) is a specialized command-line utility designed to analyze and resolve symbols found in Swift source files. It helps developers identify and manage symbol references, making it easier to understand dependencies between different parts of your codebase.
 
+## Requirements
+
+To build and use this package, you'll need:
+
+- Swift 6.0 or later: This package requires Swift 6.0 as the minimum Swift version.
+- macOS 12 (Monterey) or later: The package is designed to run on macOS 12 or newer versions.
+- Command Line Tools for Xcode
+
 ## Installation
 
 ### Using Make
