@@ -462,6 +462,13 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             // We use the location for the call as the location for any generic argument occurrences.
             let callLocation = location(from: Syntax(call))
 
+            // Check if there is a trailing closure.
+            if let braceIndex = callText.firstIndex(of: "{"),
+               let genericIndex = callText.firstIndex(of: "<"),
+               braceIndex < genericIndex {
+                return
+            }
+
             // Look for the generic argument clause delimiters in the call text.
             if let genericStart = callText.firstIndex(of: "<"),
                let genericEnd = callText.firstIndex(of: ">") {
