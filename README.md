@@ -8,6 +8,11 @@ Swift Lightweight Resolver (swrl) is a specialized command-line utility designed
 
 Based on the combination of [SwiftSyntax](https://github.com/swiftlang/swift-syntax) and [IndexStoreDB](https://github.com/swiftlang/indexstore-db).
 
+## Motivation
+
+- The problem of broken indexing and SourceKit interaction in large Xcode projects.
+- The problem of manually analyzing large files for external dependencies.
+
 ## Features
 
 - Searching for external symbols in source file.
@@ -44,6 +49,8 @@ swrl --help
 ```
 
 ## Usage
+
+**Before using the tool, pre-build the project in Xcode**
 
 Analyze a specific file in a project:
 
