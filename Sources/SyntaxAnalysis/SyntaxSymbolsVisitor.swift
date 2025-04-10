@@ -15,7 +15,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     // MARK: Properties
 
     private static let swiftBuiltInTypes: Set<String> = [
-        "Bool", "String", "Int", "Double", "Float", "Any", "Never", "Optional", "Void"
+        "Bool", "String", "Int", "Double", "Float", "Any", "AnyObject", "AnyHashable", "Never", "Optional", "Void"
     ]
 
     private let options: SwiftSymbolsAnalyzerOptions
@@ -472,6 +472,16 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             // Look for the generic argument clause delimiters in the call text.
             if let genericStart = callText.firstIndex(of: "<"),
                let genericEnd = callText.firstIndex(of: ">") {
+
+                let baseName = String(callText[callText.startIndex..<genericStart])
+                if shouldRecordSymbol(baseName) {
+                    recordOccurrence(
+                        name: baseName,
+                        kind: .usage,
+                        location: callLocation,
+                        fullyQualifiedName: fullyQualifiedName(for: baseName)
+                    )
+                }
 
                 let genericSubstring = callText[callText.index(after: genericStart)..<genericEnd]
                 let genericArgs = genericSubstring.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }

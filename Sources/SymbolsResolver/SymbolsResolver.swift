@@ -76,28 +76,30 @@ public final class SymbolsResolver: @unchecked Sendable {
 
     public func determineFileModule(fileURL: URL) throws -> String {
         let symbols = database.symbols(inFilePath: fileURL.path)
-        let kindsOfInterest: Set<IndexSymbolKind> = [.class, .struct, .enum, .extension, .function]
+        let kindsOfInterest: Set<IndexSymbolKind> = [.class, .struct, .protocol, .typealias, .enum, .extension, .function]
         let symbolOfInterest = symbols.first { kindsOfInterest.contains($0.kind) }
-        guard let symbolOfInterest else {
+
+        guard let symbolOfInterest, let moduleName = extractSymbolName(from: symbolOfInterest.usr) else {
             throw SymbolResolverError.moduleNameNotFound(fileName: fileURL.lastPathComponent)
         }
+        return moduleName
+    }
 
-        var mangledSymbolName = symbolOfInterest.usr
-        if mangledSymbolName.hasPrefix("s:") {
-            mangledSymbolName = "$s" + mangledSymbolName.dropFirst(2)
+    private func extractSymbolName(from usr: String) -> String? {
+        guard
+            usr.hasPrefix("s:"),
+            let mangledSymbolName = usr.components(separatedBy: ":").last
+        else {
+            return nil
         }
 
-        let demangledSymbolName = demangleSwiftSymbol(mangledSymbolName)
+        let demangledSymbolName = demangleSwiftSymbol("$s" + mangledSymbolName)
         guard demangledSymbolName != mangledSymbolName else {
-            throw SymbolResolverError.moduleNameNotFound(fileName: fileURL.lastPathComponent)
+            return nil
         }
 
         let components = demangledSymbolName.components(separatedBy: ".")
-        if let moduleName = components.first {
-            return moduleName
-        } else {
-            throw SymbolResolverError.moduleNameNotFound(fileName: fileURL.lastPathComponent)
-        }
+        return components.first
     }
 
     public func resolveSymbols(
