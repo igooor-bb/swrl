@@ -8,7 +8,6 @@
 import Foundation
 
 public struct SyntaxSymbolOccurrence: Hashable, Sendable {
-    public var id: String { String(hashValue) }
     public let symbolName: String
     public let fullyQualifiedName: String?
     public let kind: SymbolOccurrenceKind

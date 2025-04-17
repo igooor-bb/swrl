@@ -19,21 +19,11 @@ public final class SyntaxSymbolsAnalyzer {
         options: SwiftSymbolsAnalyzerOptions = [.includeDefinitions, .includeUsages]
     ) throws -> SyntaxSymbolsAnalysis {
         let content = try String(contentsOf: url)
-
         let node = SwiftParser.Parser.parse(source: content)
-        let sourceLocationConverter = SourceLocationConverter(
-            fileName: url.lastPathComponent,
-            tree: node
-        )
-        let visitor = SyntaxSymbolsVisitor(
-            fileURL: url,
-            options: options,
-            sourceLocationConverter: sourceLocationConverter
-        )
-
-        visitor.walk(node)
-        let symbolOccurrences = visitor.symbolOccurrences
-        let imports = visitor.imports
+        let visitor = SyntaxSymbolsVisitor()
+        let result = visitor.parseSymbols(node: node, fileName: url.lastPathComponent)
+        let symbolOccurrences = result.symbolOccurrences
+        let imports = result.imports
 
         let filteredOccurrences = filterStaticallyResolvableUsages(
             from: symbolOccurrences,

@@ -10,35 +10,46 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 
+struct SyntaxVisitorResult {
+    let symbolOccurrences: Set<SyntaxSymbolOccurrence>
+    let imports: Set<String>
+}
+
 final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     // MARK: Properties
 
-    private static let swiftBuiltInTypes: Set<String> = [
-        "Bool", "String", "Int", "Double", "Float", "Any", "AnyObject", "AnyHashable", "Never", "Optional", "Void"
-    ]
+    private var symbolOccurrences: Set<SyntaxSymbolOccurrence> = []
+    private var imports: Set<String> = []
 
-    private let options: SwiftSymbolsAnalyzerOptions
-
-    private(set) var symbolOccurrences: Set<SyntaxSymbolOccurrence> = []
-    private(set) var imports: Set<String> = []
-
-    private var fileURL: URL
-    private let sourceLocationConverter: SourceLocationConverter
+    private var sourceLocationConverter: SourceLocationConverter!
     private var scopeStack: [String] = []
     private var genericTypeParameters: Set<String> = []
 
     // MARK: Initialization
-
-    init(
-        fileURL: URL,
-        options: SwiftSymbolsAnalyzerOptions,
-        sourceLocationConverter: SourceLocationConverter
-    ) {
-        self.fileURL = fileURL
-        self.options = options
-        self.sourceLocationConverter = sourceLocationConverter
+    
+    init() {
         super.init(viewMode: .sourceAccurate)
+    }
+    
+    func parseSymbols(node: some SyntaxProtocol, fileName: String) -> SyntaxVisitorResult {
+        reset()
+        sourceLocationConverter = SourceLocationConverter(
+            fileName: fileName,
+            tree: node
+        )
+        walk(node)
+        return SyntaxVisitorResult(
+            symbolOccurrences: symbolOccurrences,
+            imports: imports
+        )
+    }
+    
+    private func reset() {
+        symbolOccurrences.removeAll()
+        imports.removeAll()
+        scopeStack.removeAll()
+        genericTypeParameters.removeAll()
     }
 
     // MARK: Recording Occurrences and Scope Helpers
@@ -49,15 +60,6 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         location: SyntaxSymbolLocation,
         fullyQualifiedName: String? = nil
     ) {
-        guard !Self.swiftBuiltInTypes.contains(name) else {
-            return
-        }
-
-        if kind.isDefinition && !options.contains(.includeDefinitions) ||
-            kind.isUsage && !options.contains(.includeUsages) {
-            return
-        }
-
         let occurrence = SyntaxSymbolOccurrence(
             symbolName: name,
             fullyQualifiedName: fullyQualifiedName,
@@ -81,6 +83,9 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         guard let clause else { return }
         for param in clause.parameters {
             genericTypeParameters.insert(param.name.text)
+            if let inheritedType = param.inheritedType {
+                collectTypeNames(from: inheritedType)
+            }
         }
     }
 
@@ -126,6 +131,11 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
+    override func visit(_ node: ImplicitlyUnwrappedOptionalTypeSyntax) -> SyntaxVisitorContinueKind {
+        collectTypeNames(from: node.wrappedType)
+        return .visitChildren
+    }
+
     override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
         if let signature = node.signature {
             if case let .parameterClause(parameterClause) = signature.parameterClause {
@@ -168,15 +178,22 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
-        scopeStack.append(uniqueFunctionIdentifier(node))
         collectGenericParameters(from: node.genericParameterClause)
-
         if let returnType = node.signature.returnClause?.type {
             collectTypeNames(from: returnType)
+        }
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
         }
         for param in node.signature.parameterClause.parameters {
             collectTypeNames(from: param.type)
         }
+        if let throwsClause = node.signature.effectSpecifiers?.throwsClause {
+            if let throwingType = throwsClause.type {
+                collectTypeNames(from: throwingType)
+            }
+        }
+        scopeStack.append(uniqueFunctionIdentifier(node))
         return .visitChildren
     }
 
@@ -428,23 +445,33 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             }
 
         } else if let optional = typeSyntax.as(OptionalTypeSyntax.self) {
-            // For an optional type, process the wrapped type.
             collectTypeNames(from: optional.wrappedType)
 
         } else if let array = typeSyntax.as(ArrayTypeSyntax.self) {
-            // For an array, process the element type.
             collectTypeNames(from: array.element)
 
         } else if let dictionary = typeSyntax.as(DictionaryTypeSyntax.self) {
-            // For a dictionary, process both key and value types.
             collectTypeNames(from: dictionary.key)
             collectTypeNames(from: dictionary.value)
 
         } else if let tuple = typeSyntax.as(TupleTypeSyntax.self) {
-            // For a tuple type, process each element's type.
-            for element in tuple.elements {
-                collectTypeNames(from: element.type)
+            tuple.elements.forEach {
+                collectTypeNames(from: $0.type)
             }
+
+        } else if let function = typeSyntax.as(FunctionTypeSyntax.self) {
+            collectTypeNames(from: function.returnClause.type)
+            function.parameters.forEach {
+                collectTypeNames(from: $0.type)
+            }
+
+        } else if let composition = typeSyntax.as(CompositionTypeSyntax.self) {
+            composition.elements.forEach {
+                collectTypeNames(from: $0.type)
+            }
+
+        } else if let someOrAny = typeSyntax.as(SomeOrAnyTypeSyntax.self) {
+            collectTypeNames(from: someOrAny.constraint)
         }
     }
 
@@ -537,7 +564,6 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                 }
             }
         }
-
     }
 
     /// Processes property wrapper attributes and collects their type names.
@@ -556,6 +582,21 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                         fullyQualifiedName: fullyQualifiedName(for: name)
                     )
                 }
+            }
+        }
+    }
+    
+    private func processGenericWhereClause(_ clause: GenericWhereClauseSyntax) {
+        for requirement in clause.requirements {
+            switch requirement.requirement {
+            case let .conformanceRequirement(syntax):
+                collectTypeNames(from: syntax.rightType)
+                
+            case .sameTypeRequirement:
+                break
+                
+            case .layoutRequirement:
+                break
             }
         }
     }

@@ -62,6 +62,10 @@ let package = Package(
                 .product(name: "IndexStoreDB", package: "indexstore-db")
             ]
         ),
-        .target(name: "Common")
+        .target(name: "Common"),
+        .testTarget(
+            name: "SyntaxAnalysisTests",
+            dependencies: [.target(name: "SyntaxAnalysis")]
+        )
     ]
 )
