@@ -446,7 +446,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                     name: name,
                     kind: .usage,
                     location: location(from: Syntax(identifier)),
-                    fullyQualifiedName: fullyQualifiedName(for: name)
+                    fullyQualifiedName: name
                 )
             }
 
