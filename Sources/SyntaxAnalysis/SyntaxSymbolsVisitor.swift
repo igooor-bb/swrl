@@ -29,7 +29,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     // MARK: Initialization
 
     init() {
-        super.init(viewMode: .sourceAccurate)
+        super.init(viewMode: .fixedUp)
     }
 
     func parseSymbols(node: some SyntaxProtocol, fileName: String) -> SyntaxVisitorResult {
@@ -103,9 +103,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     // MARK: Import Declarations
 
     override func visit(_ node: ImportDeclSyntax) -> SyntaxVisitorContinueKind {
-        if let firstPath = node.path.first?.name.text {
-            imports.insert(firstPath)
-        }
+        imports.insert(node.path.description)
         return .visitChildren
     }
 

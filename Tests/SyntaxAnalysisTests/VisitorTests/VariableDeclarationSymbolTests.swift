@@ -27,7 +27,10 @@ struct VariableDeclarationSymbolTests {
 
     // MARK: - Tests
 
-    @Test("A let declaration with a simple type.")
+    @Test(
+        "A let declaration with a simple type.",
+        .tags(.symbolKind.usage)
+    )
     func testLetWithSingleType() {
         let sut = visitor()
         let node = node("let x: UserID")
@@ -44,7 +47,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("A var declaration with a simple type.")
+    @Test(
+        "A var declaration with a simple type.",
+        .tags(.symbolKind.usage)
+    )
     func testVarWithSingleType() {
         let sut = visitor()
         let node = node("var y: Int")
@@ -61,7 +67,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("A let declaration with an optional type.")
+    @Test(
+        "A let declaration with an optional type.",
+        .tags(.symbolKind.usage)
+    )
     func testLetWithOptionalType() {
         let sut = visitor()
         let node = node("let optional: CustomType?")
@@ -78,7 +87,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("A var declaration with an optional type.")
+    @Test(
+        "A var declaration with an optional type.",
+        .tags(.symbolKind.usage)
+    )
     func testVarWithOptionalType() {
         let sut = visitor()
         let node = node("var item: CustomType?")
@@ -95,7 +107,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("A let declaration with an implicitly unwrapped optional.")
+    @Test(
+        "A let declaration with an implicitly unwrapped optional.",
+        .tags(.symbolKind.usage)
+    )
     func testLetWithImplicitlyUnwrappedOptional() {
         let sut = visitor()
         let node = node("let label: CustomType!")
@@ -112,7 +127,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("An array type in a let declaration.")
+    @Test(
+        "An array type in a let declaration.",
+        .tags(.symbolKind.usage)
+    )
     func testLetWithArrayType() {
         let sut = visitor()
         let node = node("let items: [Product]")
@@ -129,7 +147,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("An array type in a var declaration.")
+    @Test(
+        "An array type in a var declaration.",
+        .tags(.symbolKind.usage)
+    )
     func testVarWithArrayType() {
         let sut = visitor()
         let node = node("var results: [Result]")
@@ -146,7 +167,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("A dictionary type in a let declaration.")
+    @Test(
+        "A dictionary type in a let declaration.",
+        .tags(.symbolKind.usage)
+    )
     func testLetWithDictionaryType() {
         let sut = visitor()
         let node = node("let dict: [Key: Value]")
@@ -171,7 +195,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expectedKey, expectedValue]))
     }
 
-    @Test("A dictionary type in a var declaration.")
+    @Test(
+        "A dictionary type in a var declaration.",
+        .tags(.symbolKind.usage)
+    )
     func testVarWithDictionaryType() {
         let sut = visitor()
         let node = node("var lookup: [ID: Name]")
@@ -196,7 +223,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expectedKey, expectedValue]))
     }
 
-    @Test("A tuple type in a let declaration.")
+    @Test(
+        "A tuple type in a let declaration.",
+        .tags(.symbolKind.usage)
+    )
     func testLetWithTupleOfTypes() {
         let sut = visitor()
         let node = node("let config: (Bool, Settings)")
@@ -221,7 +251,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Variable with an existential type reference.")
+    @Test(
+        "Variable with an existential type reference.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithExistentialType() {
         let sut = visitor()
         let node = node("let service: any Service")
@@ -238,7 +271,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Variable with a specified generic type.")
+    @Test(
+        "Variable with a specified generic type.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithGenericType() {
         let sut = visitor()
         let node = node("let ids: Set<String>")
@@ -263,7 +299,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Variable with a complex specified generic type.")
+    @Test(
+        "Variable with a complex specified generic type.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithComplexGenericType() {
         let sut = visitor()
         let node = node("let outcome: Result<String, Error>")
@@ -296,7 +335,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Variable with a member type.")
+    @Test(
+        "Variable with a member type.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithMemberType() {
         let sut = visitor()
         let node = node("let user: User.Profile")
@@ -313,7 +355,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Variable with an array of member types.")
+    @Test(
+        "Variable with an array of member types.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithArrayOfMemberTypes() {
         let sut = visitor()
         let node = node("let users: [User.Profile]")
@@ -330,7 +375,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Variable with a dictionary of member types.")
+    @Test(
+        "Variable with a dictionary of member types.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithDictionaryOfMemberTypes() {
         let sut = visitor()
         let node = node("let userDict: [String: User.Profile]")
@@ -355,7 +403,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Variable with a closure type.")
+    @Test(
+        "Variable with a closure type.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithClosureType() {
         let sut = visitor()
         let node = node("let completion: (Result<String, Error>) -> Void")
@@ -396,7 +447,10 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
 
-    @Test("Variable with a closure with member type.")
+    @Test(
+        "Variable with a closure with member type.",
+        .tags(.symbolKind.usage)
+    )
     func testVariableWithClosureWithMemberType() {
         let sut = visitor()
         let node = node("let handler: (User.Profile) -> Void")
@@ -415,6 +469,82 @@ struct VariableDeclarationSymbolTests {
             fullyQualifiedName: "Void",
             kind: .usage,
             location: .init(line: 1, column: 32),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected1, expected2]))
+    }
+
+    @Test(
+        "Variable initialized with a custom type.",
+        .tags(.symbolKind.usage)
+    )
+    func testVariableInitializationWithCustomType() {
+        let sut = visitor()
+        let node = node("let user = User(name: \"John\")")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected = SyntaxSymbolOccurrence(
+            symbolName: "User",
+            fullyQualifiedName: "User",
+            kind: .usage,
+            location: .init(line: 1, column: 12),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected]))
+    }
+
+    @Test(
+        "Variable initialized with an array of custom types.",
+        .tags(.symbolKind.usage)
+    )
+    func testVariableInitializationWithArrayOfCustomTypes() {
+        let sut = visitor()
+        let node = node("let users = [User(name: \"John\"), User(name: \"Jane\")]")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected1 = SyntaxSymbolOccurrence(
+            symbolName: "User",
+            fullyQualifiedName: "User",
+            kind: .usage,
+            location: .init(line: 1, column: 14),
+            scopeChain: []
+        )
+
+        let expected2 = SyntaxSymbolOccurrence(
+            symbolName: "User",
+            fullyQualifiedName: "User",
+            kind: .usage,
+            location: .init(line: 1, column: 34),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected1, expected2]))
+    }
+
+    @Test(
+        "Variable initialized with custom type with custom type in parameters.",
+        .tags(.symbolKind.usage)
+    )
+    func testVariableInitializationWithCustomTypeWithCustomTypeInParameters() {
+        let sut = visitor()
+        let node = node("let user = User(profile: Profile(name: \"John\"))")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected1 = SyntaxSymbolOccurrence(
+            symbolName: "User",
+            fullyQualifiedName: "User",
+            kind: .usage,
+            location: .init(line: 1, column: 12),
+            scopeChain: []
+        )
+
+        let expected2 = SyntaxSymbolOccurrence(
+            symbolName: "Profile",
+            fullyQualifiedName: "Profile",
+            kind: .usage,
+            location: .init(line: 1, column: 26),
             scopeChain: []
         )
 
