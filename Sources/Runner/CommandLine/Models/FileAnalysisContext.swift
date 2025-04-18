@@ -14,20 +14,20 @@ struct FileAnalysisContext: Sendable {
     // Initial file information
     let file: InputFile
     let moduleName: String
-    
+
     // Syntax analysis data
     var imports: Set<String> = []
     var declarations: Set<SyntaxSymbolOccurrence> = []
     var dependencies: Set<SyntaxSymbolOccurrence> = []
-    
+
     // Symbol resolution data
     var resolvedSymbols: [SymbolResolution] = []
-    
+
     init(file: InputFile, moduleName: String) {
         self.file = file
         self.moduleName = moduleName
     }
-    
+
     @discardableResult
     func apply<T>(_ transform: (FileAnalysisContext) throws -> T) rethrows -> T {
         try transform(self)
@@ -55,14 +55,14 @@ extension FileAnalysisContext {
         logger.bulletPoint(title: "File", message: file.name)
         logger.bulletPoint(title: "Module", message: moduleName)
     }
-    
+
     private func printSyntaxAnalysis(with logger: Logger) {
         let importStrings = imports
         let declStrings = declarations.map { decl in
             switch decl.kind {
             case .usage, .definition(.unknown):
                 "\(decl.symbolName)"
-                
+
             case let .definition(type):
                 "\(decl.symbolName) (\(type))"
             }
@@ -76,7 +76,7 @@ extension FileAnalysisContext {
         logger.bulletPoint(title: "Dependencies (unique names)")
         logger.list(Set(depStrings))
     }
-    
+
     private func printSymbolsResolution(with logger: Logger) {
         let sortedSymbols = resolvedSymbols.sorted { lhs, rhs in
             lhs.targetSymbol.symbolName < rhs.targetSymbol.symbolName
@@ -85,23 +85,23 @@ extension FileAnalysisContext {
             let loc = resolution.targetSymbol.location
             let kind = resolution.originKind == .unknown ? "" : " [\(resolution.originKind)]"
             let title = "\(resolution.targetSymbol.symbolName.bold) (\(loc.line):\(loc.column))\(kind.lightBlack)"
-            
+
             switch resolution.origin {
             case .internalToModule:
                 logger.bulletPoint(
                     message: "\(title) → \(moduleName.lightGreen) (this module)"
                 )
-                
+
             case let .externalModule(moduleName):
                 logger.bulletPoint(
                     message: "\(title) → \(moduleName.lightGreen)"
                 )
-                
+
             case .system:
                 logger.bulletPoint(
                     message: "\(title) → \("System Library".lightBlack)"
                 )
-                
+
             case .unknown:
                 logger.bulletPoint(
                     message: "\(title) → \("Unknown".lightYellow)"

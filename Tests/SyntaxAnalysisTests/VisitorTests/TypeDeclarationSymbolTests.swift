@@ -6,31 +6,31 @@
 //
 
 import Common
-import Testing
-import SwiftSyntax
 import SwiftParser
+import SwiftSyntax
+import Testing
 
 @testable import SyntaxAnalysis
 
 @Suite("Type Declarations")
 struct TypeDeclarationSymbolTests {
-    
+
     // MARK: - Setup
-    
+
     private func visitor() -> SyntaxSymbolsVisitor {
         SyntaxSymbolsVisitor()
     }
-    
+
     private func node(_ content: String) -> SourceFileSyntax {
         SwiftParser.Parser.parse(source: content)
     }
-    
+
     struct DeclarationKindTest {
         let keyword: String
         let name: String
         let expectedKind: SymbolDefinitionKind
     }
-    
+
     static let kinds: [DeclarationKindTest] = [
         .init(keyword: "struct", name: "MyType", expectedKind: .struct),
         .init(keyword: "class", name: "MyClass", expectedKind: .class),
@@ -38,17 +38,17 @@ struct TypeDeclarationSymbolTests {
         .init(keyword: "protocol", name: "MyProtocol", expectedKind: .protocol),
         .init(keyword: "actor", name: "MyActor", expectedKind: .actor)
     ]
-    
+
     static let genericKinds = kinds.filter { $0.expectedKind != .protocol }
-    
+
     // MARK: - Tests
-    
+
     @Test("Simple type declaration.", arguments: kinds)
     func testSimpleDeclaration(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
-        
+
         let expected = SyntaxSymbolOccurrence(
             symbolName: kind.name,
             fullyQualifiedName: kind.name,
@@ -56,17 +56,17 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected]))
     }
-    
+
     @Test("Type declaration with single protocol conformance.", arguments: kinds)
     func testSingleProtocolConformance(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name): Codable {}")
         let result = sut.parseSymbols(node: node, fileName: "")
         let offset = kind.name.count + kind.keyword.count
-    
+
         let expected1 = SyntaxSymbolOccurrence(
             symbolName: kind.name,
             fullyQualifiedName: kind.name,
@@ -82,10 +82,10 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 4),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
-    
+
     @Test("Type declaration with multiple protocol conformances.", arguments: kinds)
     func testMultipleProtocolConformances(kind: DeclarationKindTest) {
         let sut = visitor()
@@ -100,7 +100,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
             fullyQualifiedName: "Hashable",
@@ -108,7 +108,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 4),
             scopeChain: []
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Identifiable",
             fullyQualifiedName: "Identifiable",
@@ -116,10 +116,10 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 14),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
-    
+
     @Test("Generic type declaration with a single constraint.", arguments: genericKinds)
     func testGenericConstraint(kind: DeclarationKindTest) {
         let sut = visitor()
@@ -134,7 +134,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Codable",
             fullyQualifiedName: "Codable",
@@ -142,10 +142,10 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 6),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
-    
+
     @Test("Generic type declaration with multiple constraints.", arguments: genericKinds)
     func testMultipleGenericConstraints(kind: DeclarationKindTest) {
         let sut = visitor()
@@ -160,7 +160,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Codable",
             fullyQualifiedName: "Codable",
@@ -168,7 +168,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 6),
             scopeChain: []
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
             fullyQualifiedName: "Hashable",
@@ -176,10 +176,10 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 18),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
-    
+
     @Test("Generic type declaration with compound constraint.", arguments: genericKinds)
     func testCompoundGenericConstraint(kind: DeclarationKindTest) {
         let sut = visitor()
@@ -194,7 +194,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Codable",
             fullyQualifiedName: "Codable",
@@ -202,7 +202,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 6),
             scopeChain: []
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Sendable",
             fullyQualifiedName: "Sendable",
@@ -210,10 +210,10 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 16),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
-    
+
     @Test("Generic type declaration with a where clause.", arguments: genericKinds)
     func testWhereClause(kind: DeclarationKindTest) {
         let sut = visitor()
@@ -228,7 +228,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Equatable",
             fullyQualifiedName: "Equatable",
@@ -236,10 +236,10 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 15),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
-    
+
     @Test("Generic type declaration with compound where clause.", arguments: genericKinds)
     func testCompoundWhereClause(kind: DeclarationKindTest) {
         let sut = visitor()
@@ -254,7 +254,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Equatable",
             fullyQualifiedName: "Equatable",
@@ -262,7 +262,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 15),
             scopeChain: []
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Identifiable",
             fullyQualifiedName: "Identifiable",
@@ -270,7 +270,7 @@ struct TypeDeclarationSymbolTests {
             location: .init(line: 1, column: offset + 27),
             scopeChain: []
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 }

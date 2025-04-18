@@ -7,8 +7,8 @@
 
 import Common
 import Foundation
-import SyntaxAnalysis
 import SymbolsResolver
+import SyntaxAnalysis
 
 struct OutputModel: Encodable {
 
@@ -67,7 +67,7 @@ extension FileAnalysisContext {
                 currentModuleName: moduleName
             )
         }
-        
+
         return OutputModel(
             file: file.url.path,
             module: moduleName,
@@ -76,16 +76,16 @@ extension FileAnalysisContext {
             symbols: outputResolutions
         )
     }
-    
+
     private func createDeclaration(from occ: SyntaxSymbolOccurrence) -> OutputModel.Declaration? {
         guard let type = occ.kind.definitionType else { return nil }
         return OutputModel.Declaration(name: occ.symbolName, type: type.rawValue)
     }
-    
+
     private func createOutputResolution(from resolution: SymbolResolution, currentModuleName: String) -> OutputModel.Resolution? {
         let (moduleType, moduleName) = resolution.origin.moduleDetails(currentModuleName: currentModuleName)
         let type = resolution.originKind == .unknown ? nil : resolution.originKind
-        
+
         return OutputModel.Resolution(
             symbol: resolution.targetSymbol.symbolName,
             chain: resolution.targetSymbol.scopeChain.joined(separator: "."),

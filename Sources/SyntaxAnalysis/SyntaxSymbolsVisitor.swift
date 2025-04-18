@@ -27,11 +27,11 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     private var genericTypeParameters: Set<String> = []
 
     // MARK: Initialization
-    
+
     init() {
         super.init(viewMode: .sourceAccurate)
     }
-    
+
     func parseSymbols(node: some SyntaxProtocol, fileName: String) -> SyntaxVisitorResult {
         reset()
         sourceLocationConverter = SourceLocationConverter(
@@ -44,7 +44,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             imports: imports
         )
     }
-    
+
     private func reset() {
         symbolOccurrences.removeAll()
         imports.removeAll()
@@ -363,9 +363,9 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     override func visitPost(_ node: TypeAliasDeclSyntax) {
         resetGenericParameters()
     }
-    
+
     // MARK: Associated Type
-    
+
     override func visit(_ node: AssociatedTypeDeclSyntax) -> SyntaxVisitorContinueKind {
         recordOccurrence(
             name: node.name.text,
@@ -621,16 +621,16 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             }
         }
     }
-    
+
     private func processGenericWhereClause(_ clause: GenericWhereClauseSyntax) {
         for requirement in clause.requirements {
             switch requirement.requirement {
             case let .conformanceRequirement(syntax):
                 collectTypeNames(from: syntax.rightType)
-                
+
             case .sameTypeRequirement:
                 break
-                
+
             case .layoutRequirement:
                 break
             }

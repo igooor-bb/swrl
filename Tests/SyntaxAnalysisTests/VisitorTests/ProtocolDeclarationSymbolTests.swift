@@ -6,27 +6,27 @@
 //
 
 import Common
-import Testing
-import SwiftSyntax
 import SwiftParser
+import SwiftSyntax
+import Testing
 
 @testable import SyntaxAnalysis
 
 @Suite("Protocol Declarations")
 struct ProtocolDeclarationSymbolTests {
-    
+
     // MARK: - Setup
-    
+
     private func visitor() -> SyntaxSymbolsVisitor {
         SyntaxSymbolsVisitor()
     }
-    
+
     private func node(_ content: String) -> SourceFileSyntax {
         SwiftParser.Parser.parse(source: content)
     }
-    
+
     // MARK: - Tests
-    
+
     @Test("Protocol with unbounded associated type.")
     func testProtocolWithUnboundedAssociatedType() {
         let sut = visitor()
@@ -36,7 +36,7 @@ struct ProtocolDeclarationSymbolTests {
         }
         """)
         let result = sut.parseSymbols(node: node, fileName: "")
-        
+
         let expected1 = SyntaxSymbolOccurrence(
             symbolName: "Basic",
             fullyQualifiedName: "Basic",
@@ -44,7 +44,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Element",
             fullyQualifiedName: "Basic.Element",
@@ -55,7 +55,7 @@ struct ProtocolDeclarationSymbolTests {
 
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
-    
+
     @Test("Protocol with associated type with constraint.")
     func testProtocolWithAssociatedTypeConstraint() {
         let sut = visitor()
@@ -65,7 +65,7 @@ struct ProtocolDeclarationSymbolTests {
         }
         """)
         let result = sut.parseSymbols(node: node, fileName: "")
-        
+
         let expected1 = SyntaxSymbolOccurrence(
             symbolName: "Identifiable",
             fullyQualifiedName: "Identifiable",
@@ -73,7 +73,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "ID",
             fullyQualifiedName: "Identifiable.ID",
@@ -81,7 +81,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 5),
             scopeChain: ["Identifiable"]
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
             fullyQualifiedName: "Identifiable.Hashable",
@@ -89,10 +89,10 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 24),
             scopeChain: ["Identifiable"]
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
-    
+
     @Test("Protocol with associated type with multiple constraints.")
     func testProtocolWithAssociatedTypeMultipleConstraints() {
         let sut = visitor()
@@ -102,7 +102,7 @@ struct ProtocolDeclarationSymbolTests {
         }
         """)
         let result = sut.parseSymbols(node: node, fileName: "")
-        
+
         let expected1 = SyntaxSymbolOccurrence(
             symbolName: "Serializable",
             fullyQualifiedName: "Serializable",
@@ -110,7 +110,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Value",
             fullyQualifiedName: "Serializable.Value",
@@ -118,7 +118,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 5),
             scopeChain: ["Serializable"]
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Encodable",
             fullyQualifiedName: "Serializable.Encodable",
@@ -126,7 +126,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 39),
             scopeChain: ["Serializable"]
         )
-        
+
         let expected4 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
             fullyQualifiedName: "Serializable.Hashable",
@@ -134,7 +134,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 57),
             scopeChain: ["Serializable"]
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
 
@@ -147,7 +147,7 @@ struct ProtocolDeclarationSymbolTests {
         }
         """)
         let result = sut.parseSymbols(node: node, fileName: "")
-        
+
         let expected1 = SyntaxSymbolOccurrence(
             symbolName: "Cacheable",
             fullyQualifiedName: "Cacheable",
@@ -155,7 +155,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "Key",
             fullyQualifiedName: "Cacheable.Key",
@@ -163,7 +163,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 5),
             scopeChain: ["Cacheable"]
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
             fullyQualifiedName: "Cacheable.Hashable",
@@ -171,7 +171,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 35),
             scopeChain: ["Cacheable"]
         )
-        
+
         let expected4 = SyntaxSymbolOccurrence(
             symbolName: "Sendable",
             fullyQualifiedName: "Cacheable.Sendable",
@@ -179,10 +179,10 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 46),
             scopeChain: ["Cacheable"]
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
-    
+
     @Test("Protocol with associated type with default value.")
     func testProtocolWithAssociatedTypeDefaultValue() {
         let sut = visitor()
@@ -192,7 +192,7 @@ struct ProtocolDeclarationSymbolTests {
         }
         """)
         let result = sut.parseSymbols(node: node, fileName: "")
-        
+
         let expected1 = SyntaxSymbolOccurrence(
             symbolName: "Defaultable",
             fullyQualifiedName: "Defaultable",
@@ -200,7 +200,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 1, column: 1),
             scopeChain: []
         )
-        
+
         let expected2 = SyntaxSymbolOccurrence(
             symbolName: "ID",
             fullyQualifiedName: "Defaultable.ID",
@@ -208,7 +208,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 5),
             scopeChain: ["Defaultable"]
         )
-        
+
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "UUID",
             fullyQualifiedName: "Defaultable.UUID",
@@ -216,7 +216,7 @@ struct ProtocolDeclarationSymbolTests {
             location: .init(line: 2, column: 25),
             scopeChain: ["Defaultable"]
         )
-        
+
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 }
