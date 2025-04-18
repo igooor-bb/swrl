@@ -152,13 +152,6 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
-    // MARK: Inheritance
-
-    override func visit(_ node: InheritedTypeSyntax) -> SyntaxVisitorContinueKind {
-        collectTypeNames(from: node.type)
-        return .visitChildren
-    }
-
     // MARK: Initializer and Function Signatures
 
     override func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
@@ -278,11 +271,14 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             location: location(from: Syntax(node)),
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
-        scopeStack.append(node.name.text)
         collectGenericParameters(from: node.genericParameterClause)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
             collectTypeNames(from: inheritance.type)
         }
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
+        scopeStack.append(node.name.text)
         return .visitChildren
     }
 
@@ -300,11 +296,14 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             location: location(from: Syntax(node)),
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
-        scopeStack.append(node.name.text)
         collectGenericParameters(from: node.genericParameterClause)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
             collectTypeNames(from: inheritance.type)
         }
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
+        scopeStack.append(node.name.text)
         return .visitChildren
     }
 
@@ -322,11 +321,14 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             location: location(from: Syntax(node)),
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
-        scopeStack.append(node.name.text)
         collectGenericParameters(from: node.genericParameterClause)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
             collectTypeNames(from: inheritance.type)
         }
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
+        scopeStack.append(node.name.text)
         return .visitChildren
     }
 
@@ -371,10 +373,10 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             location: location(from: Syntax(node)),
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
-        scopeStack.append(node.name.text)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
             collectTypeNames(from: inheritance.type)
         }
+        scopeStack.append(node.name.text)
         return .visitChildren
     }
 
@@ -392,11 +394,14 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             location: location(from: Syntax(node)),
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
-        scopeStack.append(node.name.text)
         collectGenericParameters(from: node.genericParameterClause)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
             collectTypeNames(from: inheritance.type)
         }
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
+        scopeStack.append(node.name.text)
         return .visitChildren
     }
 
