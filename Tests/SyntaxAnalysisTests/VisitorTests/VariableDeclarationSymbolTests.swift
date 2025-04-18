@@ -263,7 +263,7 @@ struct VariableDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Variable with a complex specified generic type such.")
+    @Test("Variable with a complex specified generic type.")
     func testVariableWithComplexGenericType() {
         let sut = visitor()
         let node = node("let outcome: Result<String, Error>")
@@ -294,5 +294,130 @@ struct VariableDeclarationSymbolTests {
         )
 
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
+    }
+
+    @Test("Variable with a member type.")
+    func testVariableWithMemberType() {
+        let sut = visitor()
+        let node = node("let user: User.Profile")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected = SyntaxSymbolOccurrence(
+            symbolName: "Profile",
+            fullyQualifiedName: "User.Profile",
+            kind: .usage,
+            location: .init(line: 1, column: 11),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected]))
+    }
+
+    @Test("Variable with an array of member types.")
+    func testVariableWithArrayOfMemberTypes() {
+        let sut = visitor()
+        let node = node("let users: [User.Profile]")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected = SyntaxSymbolOccurrence(
+            symbolName: "Profile",
+            fullyQualifiedName: "User.Profile",
+            kind: .usage,
+            location: .init(line: 1, column: 13),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected]))
+    }
+
+    @Test("Variable with a dictionary of member types.")
+    func testVariableWithDictionaryOfMemberTypes() {
+        let sut = visitor()
+        let node = node("let userDict: [String: User.Profile]")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected1 = SyntaxSymbolOccurrence(
+            symbolName: "Profile",
+            fullyQualifiedName: "User.Profile",
+            kind: .usage,
+            location: .init(line: 1, column: 24),
+            scopeChain: []
+        )
+
+        let expected2 = SyntaxSymbolOccurrence(
+            symbolName: "String",
+            fullyQualifiedName: "String",
+            kind: .usage,
+            location: .init(line: 1, column: 16),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected1, expected2]))
+    }
+
+    @Test("Variable with a closure type.")
+    func testVariableWithClosureType() {
+        let sut = visitor()
+        let node = node("let completion: (Result<String, Error>) -> Void")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected1 = SyntaxSymbolOccurrence(
+            symbolName: "Result",
+            fullyQualifiedName: "Result",
+            kind: .usage,
+            location: .init(line: 1, column: 18),
+            scopeChain: []
+        )
+
+        let expected2 = SyntaxSymbolOccurrence(
+            symbolName: "String",
+            fullyQualifiedName: "String",
+            kind: .usage,
+            location: .init(line: 1, column: 25),
+            scopeChain: []
+        )
+
+        let expected3 = SyntaxSymbolOccurrence(
+            symbolName: "Error",
+            fullyQualifiedName: "Error",
+            kind: .usage,
+            location: .init(line: 1, column: 33),
+            scopeChain: []
+        )
+
+        let expected4 = SyntaxSymbolOccurrence(
+            symbolName: "Void",
+            fullyQualifiedName: "Void",
+            kind: .usage,
+            location: .init(line: 1, column: 44),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
+    }
+
+    @Test("Variable with a closure with member type.")
+    func testVariableWithClosureWithMemberType() {
+        let sut = visitor()
+        let node = node("let handler: (User.Profile) -> Void")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected1 = SyntaxSymbolOccurrence(
+            symbolName: "Profile",
+            fullyQualifiedName: "User.Profile",
+            kind: .usage,
+            location: .init(line: 1, column: 15),
+            scopeChain: []
+        )
+
+        let expected2 = SyntaxSymbolOccurrence(
+            symbolName: "Void",
+            fullyQualifiedName: "Void",
+            kind: .usage,
+            location: .init(line: 1, column: 32),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 }

@@ -84,7 +84,7 @@ struct ProtocolDeclarationSymbolTests {
 
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
-            fullyQualifiedName: "Identifiable.Hashable",
+            fullyQualifiedName: "Hashable",
             kind: .usage,
             location: .init(line: 2, column: 24),
             scopeChain: ["Identifiable"]
@@ -121,7 +121,7 @@ struct ProtocolDeclarationSymbolTests {
 
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Encodable",
-            fullyQualifiedName: "Serializable.Encodable",
+            fullyQualifiedName: "Encodable",
             kind: .usage,
             location: .init(line: 2, column: 39),
             scopeChain: ["Serializable"]
@@ -129,7 +129,7 @@ struct ProtocolDeclarationSymbolTests {
 
         let expected4 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
-            fullyQualifiedName: "Serializable.Hashable",
+            fullyQualifiedName: "Hashable",
             kind: .usage,
             location: .init(line: 2, column: 57),
             scopeChain: ["Serializable"]
@@ -166,7 +166,7 @@ struct ProtocolDeclarationSymbolTests {
 
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "Hashable",
-            fullyQualifiedName: "Cacheable.Hashable",
+            fullyQualifiedName: "Hashable",
             kind: .usage,
             location: .init(line: 2, column: 35),
             scopeChain: ["Cacheable"]
@@ -174,7 +174,7 @@ struct ProtocolDeclarationSymbolTests {
 
         let expected4 = SyntaxSymbolOccurrence(
             symbolName: "Sendable",
-            fullyQualifiedName: "Cacheable.Sendable",
+            fullyQualifiedName: "Sendable",
             kind: .usage,
             location: .init(line: 2, column: 46),
             scopeChain: ["Cacheable"]
@@ -211,7 +211,7 @@ struct ProtocolDeclarationSymbolTests {
 
         let expected3 = SyntaxSymbolOccurrence(
             symbolName: "UUID",
-            fullyQualifiedName: "Defaultable.UUID",
+            fullyQualifiedName: "UUID",
             kind: .usage,
             location: .init(line: 2, column: 25),
             scopeChain: ["Defaultable"]

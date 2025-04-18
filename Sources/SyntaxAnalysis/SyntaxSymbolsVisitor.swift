@@ -219,37 +219,6 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
-    // MARK: Member Types (Qualified Type Names)
-
-    override func visit(_ node: MemberTypeSyntax) -> SyntaxVisitorContinueKind {
-        // Check if the base of the member type is an imported module.
-        if let baseIdentifier = node.baseType.as(IdentifierTypeSyntax.self),
-           imports.contains(baseIdentifier.name.text) {
-            // Construct the fully qualified name using the module and the member.
-            let fqn = "\(baseIdentifier.name.text).\(node.name.text)"
-
-            // Record the external usage with its fully qualified name.
-            recordOccurrence(
-                name: node.name.text,
-                kind: .usage,
-                location: location(from: Syntax(node)),
-                fullyQualifiedName: fqn
-            )
-        } else {
-            // For unqualified member types, record normally.
-            recordOccurrence(
-                name: node.name.text,
-                kind: .usage,
-                location: location(from: Syntax(node)),
-                fullyQualifiedName: fullyQualifiedName(for: node.name.text)
-            )
-
-            // Also, process the base type recursively.
-            collectTypeNames(from: node.baseType)
-        }
-        return .visitChildren
-    }
-
     // MARK: Subscript
 
     override func visit(_ node: SubscriptDeclSyntax) -> SyntaxVisitorContinueKind {
@@ -460,25 +429,12 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         } else if let member = typeSyntax.as(MemberTypeSyntax.self) {
             // If the type is a member type (qualified name) like "Module.TypeName".
             // Record the right-hand name as the type.
-            if let baseIdentifier = member.baseType.as(IdentifierTypeSyntax.self),
-               imports.contains(baseIdentifier.name.text) {
-                let fqn = "\(baseIdentifier.name.text).\(member.name.text)"
-                recordOccurrence(
-                    name: member.name.text,
-                    kind: .usage,
-                    location: location(from: Syntax(member)),
-                    fullyQualifiedName: fqn
-                )
-            } else {
-                // Otherwise, process as before.
-                recordOccurrence(
-                    name: member.name.text,
-                    kind: .usage,
-                    location: location(from: Syntax(member)),
-                    fullyQualifiedName: fullyQualifiedName(for: member.name.text)
-                )
-                collectTypeNames(from: member.baseType)
-            }
+            recordOccurrence(
+                name: member.name.text,
+                kind: .usage,
+                location: location(from: Syntax(member)),
+                fullyQualifiedName: member.description
+            )
 
         } else if let optional = typeSyntax.as(OptionalTypeSyntax.self) {
             collectTypeNames(from: optional.wrappedType)
@@ -542,7 +498,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                         name: baseName,
                         kind: .usage,
                         location: callLocation,
-                        fullyQualifiedName: fullyQualifiedName(for: baseName)
+                        fullyQualifiedName: baseName
                     )
                 }
 
@@ -553,7 +509,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                         name: arg,
                         kind: .usage,
                         location: callLocation,
-                        fullyQualifiedName: fullyQualifiedName(for: arg)
+                        fullyQualifiedName: arg
                     )
                 }
             }
@@ -570,13 +526,12 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                     name: name,
                     kind: .usage,
                     location: location(from: Syntax(identifier)),
-                    fullyQualifiedName: fullyQualifiedName(for: name)
+                    fullyQualifiedName: name
                 )
             }
 
         } else if let member = expr.as(MemberAccessExprSyntax.self) {
             // If the member access has a base, check if it is an imported module.
-
             if let base = member.base,
                let baseID = base.as(DeclReferenceExprSyntax.self),
                imports.contains(baseID.baseName.text) {
@@ -595,7 +550,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                         name: name,
                         kind: .usage,
                         location: location(from: Syntax(member)),
-                        fullyQualifiedName: fullyQualifiedName(for: name)
+                        fullyQualifiedName: name
                     )
                 }
             }
@@ -615,7 +570,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                         name: name,
                         kind: .usage,
                         location: location(from: Syntax(attribute)),
-                        fullyQualifiedName: fullyQualifiedName(for: name)
+                        fullyQualifiedName: name
                     )
                 }
             }
