@@ -37,6 +37,7 @@ public enum SymbolDefinitionKind: String, Hashable, Sendable {
     case `enum`
     case `typealias`
     case `macro`
+    case `associatedType`
     case unknown
 }
 

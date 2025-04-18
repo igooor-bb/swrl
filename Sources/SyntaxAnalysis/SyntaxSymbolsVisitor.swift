@@ -363,6 +363,27 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     override func visitPost(_ node: TypeAliasDeclSyntax) {
         resetGenericParameters()
     }
+    
+    // MARK: Associated Type
+    
+    override func visit(_ node: AssociatedTypeDeclSyntax) -> SyntaxVisitorContinueKind {
+        recordOccurrence(
+            name: node.name.text,
+            kind: .definition(.associatedType),
+            location: location(from: Syntax(node)),
+            fullyQualifiedName: fullyQualifiedName(for: node.name.text)
+        )
+        if let initializer = node.initializer?.value {
+            collectTypeNames(from: initializer)
+        }
+        for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
+            collectTypeNames(from: inheritance.type)
+        }
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
+        return .visitChildren
+    }
 
     // MARK: Protocol
 
