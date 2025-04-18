@@ -352,6 +352,9 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         )
         collectGenericParameters(from: node.genericParameterClause)
         collectTypeNames(from: node.initializer.value)
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
         return .visitChildren
     }
 
