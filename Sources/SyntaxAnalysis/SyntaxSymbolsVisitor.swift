@@ -162,13 +162,20 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     // MARK: Initializer and Function Signatures
 
     override func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
-        let name = "init"
-        scopeStack.append(name)
         collectGenericParameters(from: node.genericParameterClause)
-
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
         for param in node.signature.parameterClause.parameters {
             collectTypeNames(from: param.type)
         }
+        if let throwsClause = node.signature.effectSpecifiers?.throwsClause {
+            if let throwingType = throwsClause.type {
+                collectTypeNames(from: throwingType)
+            }
+        }
+        let name = "init"
+        scopeStack.append(name)
         return .visitChildren
     }
 
