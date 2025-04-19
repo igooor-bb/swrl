@@ -27,7 +27,10 @@ struct NestedTypeSymbolTests {
 
     // MARK: - Tests
 
-    @Test("Nested struct inside a struct.")
+    @Test(
+        "Nested struct inside a struct.",
+        .tags(.symbolKind.definition)
+    )
     func testNestedStructDefinition() {
         let sut = visitor()
         let node = node("""
@@ -56,7 +59,10 @@ struct NestedTypeSymbolTests {
         #expect(result.symbolOccurrences == Set([outer, inner]))
     }
 
-    @Test("Usage of nested type.")
+    @Test(
+        "Usage of nested type.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testUsageOfNestedType() {
         let sut = visitor()
         let node = node("""
@@ -94,7 +100,10 @@ struct NestedTypeSymbolTests {
         #expect(result.symbolOccurrences == Set([container, payload, usage]))
     }
 
-    @Test("Nested type usage inside nested method.")
+    @Test(
+        "Nested type usage inside nested method.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testNestedTypeUsedInMethodScope() {
         let sut = visitor()
         let node = node("""
@@ -143,7 +152,10 @@ struct NestedTypeSymbolTests {
         #expect(result.symbolOccurrences == Set([box, item, returnType, initializerCall]))
     }
 
-    @Test("Deeply nested type declaration.")
+    @Test(
+        "Deeply nested type declaration.",
+        .tags(.symbolKind.definition)
+    )
     func testDeeplyNestedTypeDefinition() {
         let sut = visitor()
         let node = node("""
@@ -182,7 +194,10 @@ struct NestedTypeSymbolTests {
         #expect(result.symbolOccurrences == Set([a, b, c]))
     }
 
-    @Test("Usage of nested type inside an enum.")
+    @Test(
+        "Usage of nested type inside an enum.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testNestedUsageInsideEnum() {
         let sut = visitor()
         let node = node("""
@@ -220,7 +235,10 @@ struct NestedTypeSymbolTests {
         #expect(result.symbolOccurrences == Set([kind, payloadDef, payloadUsage]))
     }
 
-    @Test("Usage of nested type across sibling scopes.")
+    @Test(
+        "Usage of nested type across sibling scopes.",
+        .tags(.symbolKind.definition, .symbolKind.usage, .syntaxFeature.memberName)
+    )
     func testCrossScopeUsage() {
         let sut = visitor()
         let node = node("""

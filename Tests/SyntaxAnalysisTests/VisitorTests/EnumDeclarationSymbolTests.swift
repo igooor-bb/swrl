@@ -27,7 +27,10 @@ struct EnumDeclarationSymbolTests {
 
     // MARK: - Tests
 
-    @Test("Enum case with no associated values.")
+    @Test(
+        "Enum case with no associated values.",
+        .tags(.symbolKind.definition)
+    )
     func testEnumWithSimpleCase() {
         let sut = visitor()
         let node = node("""
@@ -48,7 +51,10 @@ struct EnumDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Enum case with an associated value.")
+    @Test(
+        "Enum case with an associated value.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testEnumWithAssociatedType() {
         let sut = visitor()
         let node = node("""
@@ -77,7 +83,10 @@ struct EnumDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Enum case with a tuple type.")
+    @Test(
+        "Enum case with a tuple type.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testEnumWithTuplePayload() {
         let sut = visitor()
         let node = node("""
@@ -114,7 +123,10 @@ struct EnumDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Enum case with a generic payload.")
+    @Test(
+        "Enum case with a generic payload.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testEnumWithGenericAssociatedType() {
         let sut = visitor()
         let node = node("""
@@ -159,7 +171,10 @@ struct EnumDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
 
-    @Test("Enum case with multiple associated values.")
+    @Test(
+        "Enum case with multiple associated values.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testEnumWithMultipleAssociatedValues() {
         let sut = visitor()
         let node = node("""
@@ -196,7 +211,10 @@ struct EnumDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Indirect enum with self-referencing associated values.")
+    @Test(
+        "Indirect enum with self-referencing associated values.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testIndirectEnumWithSelfRecursiveCase() {
         let sut = visitor()
         let node = node("""

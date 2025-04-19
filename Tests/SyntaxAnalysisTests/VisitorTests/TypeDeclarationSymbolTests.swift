@@ -43,7 +43,11 @@ struct TypeDeclarationSymbolTests {
 
     // MARK: - Tests
 
-    @Test("Simple type declaration.", arguments: kinds)
+    @Test(
+        "Simple type declaration.",
+        .tags(.symbolKind.definition),
+        arguments: kinds
+    )
     func testSimpleDeclaration(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name) {}")
@@ -60,7 +64,11 @@ struct TypeDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Type declaration with single protocol conformance.", arguments: kinds)
+    @Test(
+        "Type declaration with single protocol conformance.",
+        .tags(.symbolKind.definition),
+        arguments: kinds
+    )
     func testSingleProtocolConformance(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name): Codable {}")
@@ -86,7 +94,11 @@ struct TypeDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Type declaration with multiple protocol conformances.", arguments: kinds)
+    @Test(
+        "Type declaration with multiple protocol conformances.",
+        .tags(.symbolKind.definition),
+        arguments: kinds
+    )
     func testMultipleProtocolConformances(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name): Hashable, Identifiable {}")
@@ -120,7 +132,11 @@ struct TypeDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Generic type declaration with a single constraint.", arguments: genericKinds)
+    @Test(
+        "Generic type declaration with a single constraint.",
+        .tags(.symbolKind.definition, .syntaxFeature.generic, .syntaxFeature.constraint),
+        arguments: genericKinds
+    )
     func testGenericConstraint(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T: Codable> {}")
@@ -146,7 +162,11 @@ struct TypeDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Generic type declaration with multiple constraints.", arguments: genericKinds)
+    @Test(
+        "Generic type declaration with multiple constraints.",
+        .tags(.symbolKind.definition, .syntaxFeature.generic, .syntaxFeature.constraint),
+        arguments: genericKinds
+    )
     func testMultipleGenericConstraints(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T: Codable, U: Hashable> {}")
@@ -180,7 +200,11 @@ struct TypeDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Generic type declaration with compound constraint.", arguments: genericKinds)
+    @Test(
+        "Generic type declaration with compound constraint.",
+        .tags(.symbolKind.definition, .syntaxFeature.generic, .syntaxFeature.compoundConstraint),
+        arguments: genericKinds
+    )
     func testCompoundGenericConstraint(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T: Codable & Sendable> {}")
@@ -214,7 +238,16 @@ struct TypeDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Generic type declaration with a where clause.", arguments: genericKinds)
+    @Test(
+        "Generic type declaration with a where clause.",
+        .tags(
+            .symbolKind.definition,
+            .syntaxFeature.generic,
+            .syntaxFeature.constraint,
+            .syntaxFeature.whereClause
+        ),
+        arguments: genericKinds
+    )
     func testWhereClause(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T> where T: Equatable {}")
@@ -240,7 +273,16 @@ struct TypeDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Generic type declaration with compound where clause.", arguments: genericKinds)
+    @Test(
+        "Generic type declaration with compound where clause.",
+        .tags(
+            .symbolKind.definition,
+            .syntaxFeature.generic,
+            .syntaxFeature.compoundConstraint,
+            .syntaxFeature.whereClause
+        ),
+        arguments: genericKinds
+    )
     func testCompoundWhereClause(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T> where T: Equatable & Identifiable {}")

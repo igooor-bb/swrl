@@ -12,6 +12,8 @@ import SwiftSyntax
 
 public final class SyntaxSymbolsAnalyzer {
 
+    private let visitor = SyntaxSymbolsVisitor()
+
     public init () {}
 
     public func analyzeFile(
@@ -20,7 +22,6 @@ public final class SyntaxSymbolsAnalyzer {
     ) throws -> SyntaxSymbolsAnalysis {
         let content = try String(contentsOf: url)
         let node = SwiftParser.Parser.parse(source: content)
-        let visitor = SyntaxSymbolsVisitor()
         let result = visitor.parseSymbols(node: node, fileName: url.lastPathComponent)
         let symbolOccurrences = result.symbolOccurrences
         let imports = result.imports

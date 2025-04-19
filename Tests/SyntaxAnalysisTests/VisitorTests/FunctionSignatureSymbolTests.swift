@@ -27,7 +27,10 @@ struct FunctionSignatureSymbolTests {
 
     // MARK: - Tests
 
-    @Test("Function with a return type.")
+    @Test(
+        "Function with a return type.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithReturnType() {
         let sut = visitor()
         let node = node("func fetch() -> Response")
@@ -44,7 +47,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with a parameter.")
+    @Test(
+        "Function with a parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithSingleParameter() {
         let sut = visitor()
         let node = node("func process(input: Data)")
@@ -61,7 +67,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with a variadic parameter.")
+    @Test(
+        "Function with a variadic parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithVariadicParameter() {
         let sut = visitor()
         let node = node("func sum(values: Int...)")
@@ -78,7 +87,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with multiple parameters.")
+    @Test(
+        "Function with multiple parameters.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithMultipleParameters() {
         let sut = visitor()
         let node = node("func merge(lhs: Version, rhs: Version)")
@@ -103,7 +115,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected, expected2]))
     }
 
-    @Test("Function with a tuple parameter.")
+    @Test(
+        "Function with a tuple parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithTupleParameter() {
         let sut = visitor()
         let node = node("func setPoint(position: (Float, Float))")
@@ -128,7 +143,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function with an array parameter.")
+    @Test(
+        "Function with an array parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithArrayParameter() {
         let sut = visitor()
         let node = node("func render(images: [Image])")
@@ -145,7 +163,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with a dictionary parameter.")
+    @Test(
+        "Function with a dictionary parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithDictionaryParameter() {
         let sut = visitor()
         let node = node("func map(values: [Key: Value])")
@@ -170,7 +191,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function with single generic parameter and constraint.")
+    @Test(
+        "Function with single generic parameter and constraint.",
+        .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
+    )
     func testFunctionWithGenericParameterConstraint() {
         let sut = visitor()
         let node = node("func decode<T: Decodable>(value: T)")
@@ -187,7 +211,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expectedConstraint]))
     }
 
-    @Test("Function with a specified generic parameter type.")
+    @Test(
+        "Function with a specified generic parameter type.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithSpecifiedGenericParameter() {
         let sut = visitor()
         let node = node("func store(keys: Set<String>)")
@@ -212,7 +239,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function returning a specified generic type.")
+    @Test(
+        "Function returning a specified generic type.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionReturningSpecifiedGenericType() {
         let sut = visitor()
         let node = node("func load() -> Result<String, Error>")
@@ -245,7 +275,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Function with multiple generic parameters and constraints.")
+    @Test(
+        "Function with multiple generic parameters and constraints.",
+        .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
+    )
     func testFunctionWithMultipleGenericParameterConstraint() {
         let sut = visitor()
         let node = node("func decode<T: Decodable, Q: Encodable>(value: T, into: inout Q)")
@@ -270,7 +303,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function with compound generic parameter constraints.")
+    @Test(
+        "Function with compound generic parameter constraints.",
+        .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.compoundConstraint)
+    )
     func testFunctionWithMultipleParameterGenericConstraints() {
         let sut = visitor()
         let node = node("func process<T: Codable & Equatable>(value: T)")
@@ -295,7 +331,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function with a closure parameter.")
+    @Test(
+        "Function with a closure parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithClosureParameter() {
         let sut = visitor()
         let node = node("func run(completion: () -> Void)")
@@ -312,7 +351,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function returning a closure.")
+    @Test(
+        "Function returning a closure.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionReturningClosure() {
         let sut = visitor()
         let node = node("func makeHandler() -> () -> Output")
@@ -329,7 +371,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with a closure parameter that accepts a type.")
+    @Test(
+        "Function with a closure parameter that accepts a type.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithClosureParameterWithInput() {
         let sut = visitor()
         let node = node("func handle(callback: (Error) -> Void)")
@@ -354,7 +399,15 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function with a generic constraint in where clause.")
+    @Test(
+        "Function with a generic constraint in where clause.",
+        .tags(
+            .symbolKind.usage,
+            .syntaxFeature.generic,
+            .syntaxFeature.constraint,
+            .syntaxFeature.whereClause
+        )
+    )
     func testFunctionWithWhereClause() {
         let sut = visitor()
         let node = node("func sync<T>(input: T) where T: Codable")
@@ -371,7 +424,15 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with multiple generic constraints in where clause.")
+    @Test(
+        "Function with multiple generic constraints in where clause.",
+        .tags(
+            .symbolKind.usage,
+            .syntaxFeature.generic,
+            .syntaxFeature.constraint,
+            .syntaxFeature.whereClause
+        )
+    )
     func testFunctionWithComplexWhereClause() {
         let sut = visitor()
         let node = node("func sync<T, Q>(input: T, queue: Q) where T: Codable, Q: Sendable")
@@ -396,7 +457,15 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function with a compound where clause.")
+    @Test(
+        "Function with a compound where clause.",
+        .tags(
+            .symbolKind.usage,
+            .syntaxFeature.generic,
+            .syntaxFeature.compoundConstraint,
+            .syntaxFeature.whereClause
+        )
+    )
     func testFunctionWithCompoundWhereClause() {
         let sut = visitor()
         let node = node("func sync<T>(input: T) where T: Codable & Hashable")
@@ -421,7 +490,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Function with a return type using opaque result type.")
+    @Test(
+        "Function with a return type using opaque result type.",
+        .tags(.symbolKind.usage, .syntaxFeature.opaque)
+    )
     func testFunctionWithOpaqueReturnType() {
         let sut = visitor()
         let node = node("func render() -> some View")
@@ -438,7 +510,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with an existential type parameter.")
+    @Test(
+        "Function with an existential type parameter.",
+        .tags(.symbolKind.usage, .syntaxFeature.existential)
+    )
     func testFunctionWithExistentialParameter() {
         let sut = visitor()
         let node = node("func resolve(service: any Service)")
@@ -455,7 +530,10 @@ struct FunctionSignatureSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Function with a typed throwing error.")
+    @Test(
+        "Function with a typed throwing error.",
+        .tags(.symbolKind.usage)
+    )
     func testFunctionWithTypedThrowingError() {
         let sut = visitor()
         let node = node("func risky() throws(MyError) -> Void")

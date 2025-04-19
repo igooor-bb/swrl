@@ -27,7 +27,10 @@ struct TypealiasSymbolTests {
 
     // MARK: - Tests
 
-    @Test("Typealias to a simple type.")
+    @Test(
+        "Typealias to a simple type.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasToSimpleType() {
         let sut = visitor()
         let node = node("typealias ID = String")
@@ -52,7 +55,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Typealias to a complex type.")
+    @Test(
+        "Typealias to a complex type.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasToComplexType() {
         let sut = visitor()
         let node = node("typealias StringMap = [String: Value]")
@@ -85,7 +91,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Typealias to a function type.")
+    @Test(
+        "Typealias to a function type.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasToFunctionType() {
         let sut = visitor()
         let node = node("typealias Completion = (Result) -> Void")
@@ -118,7 +127,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Typealias with generic parameters and constraints.")
+    @Test(
+        "Typealias with generic parameters and constraints.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testGenericTypealiasWithConstraint() {
         let sut = visitor()
         let node = node("typealias Filter<T: Hashable> = (T) -> Bool")
@@ -151,7 +163,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Typealias with a where clause.")
+    @Test(
+        "Typealias with a where clause.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasWithWhereClause() {
         let sut = visitor()
         let node = node("typealias Filter<T> = (T) -> Bool where T: Equatable")
@@ -184,7 +199,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Typealias with multiple generic constraints.")
+    @Test(
+        "Typealias with multiple generic constraints.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasWithMultipleGenericConstraints() {
         let sut = visitor()
         let node = node("typealias Transform<T: Decodable, U: Encodable> = (T) -> U")
@@ -217,7 +235,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Typealias with compound generic constraint.")
+    @Test(
+        "Typealias with compound generic constraint.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasWithCompoundGenericConstraint() {
         let sut = visitor()
         let node = node("typealias Storable<T: Codable & Hashable> = (T) -> Bool")
@@ -258,7 +279,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
 
-    @Test("Typealias with compound constraint in a where clause.")
+    @Test(
+        "Typealias with compound constraint in a where clause.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasWithCompoundWhereClause() {
         let sut = visitor()
         let node = node("typealias Filter<T> = (T) -> Bool where T: Codable & Sendable")
@@ -299,7 +323,10 @@ struct TypealiasSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
 
-    @Test("Typealias to a protocol composition.")
+    @Test(
+        "Typealias to a protocol composition.",
+        .tags(.symbolKind.definition, .symbolKind.usage)
+    )
     func testTypealiasToProtocolComposition() {
         let sut = visitor()
         let node = node("typealias Codable = Encodable & Decodable")

@@ -27,7 +27,10 @@ struct ProtocolDeclarationSymbolTests {
 
     // MARK: - Tests
 
-    @Test("Protocol with unbounded associated type.")
+    @Test(
+        "Protocol with unbounded associated type.",
+        .tags(.symbolKind.definition)
+    )
     func testProtocolWithUnboundedAssociatedType() {
         let sut = visitor()
         let node = node("""
@@ -56,7 +59,10 @@ struct ProtocolDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Protocol with associated type with constraint.")
+    @Test(
+        "Protocol with associated type with constraint.",
+        .tags(.symbolKind.definition, .syntaxFeature.constraint)
+    )
     func testProtocolWithAssociatedTypeConstraint() {
         let sut = visitor()
         let node = node("""
@@ -93,7 +99,10 @@ struct ProtocolDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Protocol with associated type with multiple constraints.")
+    @Test(
+        "Protocol with associated type with multiple constraints.",
+        .tags(.symbolKind.definition, .syntaxFeature.constraint, .syntaxFeature.whereClause)
+    )
     func testProtocolWithAssociatedTypeMultipleConstraints() {
         let sut = visitor()
         let node = node("""
@@ -138,7 +147,10 @@ struct ProtocolDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
 
-    @Test("Protocol with associated type with compound constraint.")
+    @Test(
+        "Protocol with associated type with compound constraint.",
+        .tags(.symbolKind.definition, .syntaxFeature.compoundConstraint, .syntaxFeature.whereClause)
+    )
     func testProtocolWithAssociatedTypeCompoundConstraint() {
         let sut = visitor()
         let node = node("""
@@ -183,7 +195,10 @@ struct ProtocolDeclarationSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
     }
 
-    @Test("Protocol with associated type with default value.")
+    @Test(
+        "Protocol with associated type with default value.",
+        .tags(.symbolKind.definition, .syntaxFeature.constraint)
+    )
     func testProtocolWithAssociatedTypeDefaultValue() {
         let sut = visitor()
         let node = node("""

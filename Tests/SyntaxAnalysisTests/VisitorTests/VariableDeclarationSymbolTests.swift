@@ -337,7 +337,7 @@ struct VariableDeclarationSymbolTests {
 
     @Test(
         "Variable with a member type.",
-        .tags(.symbolKind.usage)
+        .tags(.symbolKind.usage, .syntaxFeature.memberName)
     )
     func testVariableWithMemberType() {
         let sut = visitor()
@@ -377,7 +377,7 @@ struct VariableDeclarationSymbolTests {
 
     @Test(
         "Variable with a dictionary of member types.",
-        .tags(.symbolKind.usage)
+        .tags(.symbolKind.usage, .syntaxFeature.memberName)
     )
     func testVariableWithDictionaryOfMemberTypes() {
         let sut = visitor()
@@ -449,7 +449,7 @@ struct VariableDeclarationSymbolTests {
 
     @Test(
         "Variable with a closure with member type.",
-        .tags(.symbolKind.usage)
+        .tags(.symbolKind.usage, .syntaxFeature.memberName)
     )
     func testVariableWithClosureWithMemberType() {
         let sut = visitor()
@@ -545,6 +545,34 @@ struct VariableDeclarationSymbolTests {
             fullyQualifiedName: "Profile",
             kind: .usage,
             location: .init(line: 1, column: 26),
+            scopeChain: []
+        )
+
+        #expect(result.symbolOccurrences == Set([expected1, expected2]))
+    }
+
+    @Test(
+        "Variable initialized with an existential type.",
+        .tags(.symbolKind.usage, .syntaxFeature.existential)
+    )
+    func testVariableInitializationWithExistentialType() {
+        let sut = visitor()
+        let node = node("let service: any Service = MyService()")
+        let result = sut.parseSymbols(node: node, fileName: "")
+
+        let expected1 = SyntaxSymbolOccurrence(
+            symbolName: "Service",
+            fullyQualifiedName: "Service",
+            kind: .usage,
+            location: .init(line: 1, column: 18),
+            scopeChain: []
+        )
+
+        let expected2 = SyntaxSymbolOccurrence(
+            symbolName: "MyService",
+            fullyQualifiedName: "MyService",
+            kind: .usage,
+            location: .init(line: 1, column: 28),
             scopeChain: []
         )
 

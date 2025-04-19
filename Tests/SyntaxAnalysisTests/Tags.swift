@@ -8,8 +8,24 @@
 import Testing
 
 extension Tag {
+
     enum symbolKind {
+        @Tag static var `import`: Tag
+
         @Tag static var definition: Tag
         @Tag static var usage: Tag
+    }
+
+    enum syntaxFeature {
+        @Tag static var generic: Tag
+        @Tag static var constraint: Tag
+        @Tag static var compoundConstraint: Tag
+
+        @Tag static var whereClause: Tag
+
+        @Tag static var opaque: Tag
+        @Tag static var existential: Tag
+
+        @Tag static var memberName: Tag
     }
 }

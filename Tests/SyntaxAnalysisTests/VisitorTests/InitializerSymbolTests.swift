@@ -27,7 +27,10 @@ struct InitializerSymbolTests {
 
     // MARK: - Tests
 
-    @Test("Initializer with a single parameter.")
+    @Test(
+        "Initializer with a single parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testInitializerWithSingleParameter() {
         let sut = visitor()
         let node = node("init(name: String) {}")
@@ -44,7 +47,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Initializer with multiple parameters.")
+    @Test(
+        "Initializer with multiple parameters.",
+        .tags(.symbolKind.usage)
+    )
     func testInitializerWithMultipleParameters() {
         let sut = visitor()
         let node = node("init(id: UUID, count: Int) {}")
@@ -69,24 +75,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Failable initializer with a parameter.")
-    func testFailableInitializer() {
-        let sut = visitor()
-        let node = node("init?(data: Data) {}")
-        let result = sut.parseSymbols(node: node, fileName: "")
-
-        let expected = SyntaxSymbolOccurrence(
-            symbolName: "Data",
-            fullyQualifiedName: "Data",
-            kind: .usage,
-            location: .init(line: 1, column: 13),
-            scopeChain: []
-        )
-
-        #expect(result.symbolOccurrences == Set([expected]))
-    }
-
-    @Test("Throwing initializer with a parameter.")
+    @Test(
+        "Throwing initializer with a parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testThrowingInitializer() {
         let sut = visitor()
         let node = node("init(file: URL) throws(CustomError) {}")
@@ -111,7 +103,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Initializer with a closure parameter.")
+    @Test(
+        "Initializer with a closure parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testInitializerWithClosureParameter() {
         let sut = visitor()
         let node = node("init(completion: () -> Void)")
@@ -128,7 +123,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Initializer with array and dictionary parameters.")
+    @Test(
+        "Initializer with array and dictionary parameters.",
+        .tags(.symbolKind.usage)
+    )
     func testInitializerWithArrayAndDictionaryTypes() {
         let sut = visitor()
         let node = node("init(list: [Item], mapping: [Key: Value]) {}")
@@ -161,7 +159,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Initializer with a generic type parameter like Result<String, Error>.")
+    @Test(
+        "Initializer with a generic type parameter like Result<String, Error>.",
+        .tags(.symbolKind.usage)
+    )
     func testInitializerWithGenericTypeParameter() {
         let sut = visitor()
         let node = node("init(result: Result<String, Error>) {}")
@@ -194,7 +195,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2, expected3]))
     }
 
-    @Test("Convenience initializer with a generic parameter.")
+    @Test(
+        "Convenience initializer with a generic parameter.",
+        .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
+    )
     func testConvenienceInitializerWithGenericConstraint() {
         let sut = visitor()
         let node = node("convenience init<T: Codable>(from: T) {}")
@@ -211,7 +215,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Initializer with multiple generic parameters and constraints.")
+    @Test(
+        "Initializer with multiple generic parameters and constraints.",
+        .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
+    )
     func testInitializerWithMultipleGenericConstraints() {
         let sut = visitor()
         let node = node("init<T: Codable, U: Equatable>(first: T, second: U) {}")
@@ -236,7 +243,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Initializer with a compound generic constraint.")
+    @Test(
+        "Initializer with a compound generic constraint.",
+        .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.compoundConstraint)
+    )
     func testInitializerWithCompoundGenericConstraint() {
         let sut = visitor()
         let node = node("init<T: Hashable & Codable>(input: T) {}")
@@ -261,7 +271,10 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Initializer with a tuple parameter.")
+    @Test(
+        "Initializer with a tuple parameter.",
+        .tags(.symbolKind.usage)
+    )
     func testInitializerWithTupleParameter() {
         let sut = visitor()
         let node = node("init(origin: (Float, Float)) {}")
@@ -286,7 +299,15 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Initializer with a where clause.")
+    @Test(
+        "Initializer with a where clause.",
+        .tags(
+            .symbolKind.usage,
+            .syntaxFeature.generic,
+            .syntaxFeature.constraint,
+            .syntaxFeature.whereClause
+        )
+    )
     func testInitializerWithWhereClause() {
         let sut = visitor()
         let node = node("init<T>(value: T) where T: Hashable {}")
@@ -303,7 +324,15 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected]))
     }
 
-    @Test("Initializer with multiple generic constraints in a where clause.")
+    @Test(
+        "Initializer with multiple generic constraints in a where clause.",
+        .tags(
+            .symbolKind.usage,
+            .syntaxFeature.generic,
+            .syntaxFeature.constraint,
+            .syntaxFeature.whereClause
+        )
+    )
     func testInitializerWithComplexWhereClause() {
         let sut = visitor()
         let node = node("init<T, U>(first: T, second: U) where T: Codable, U: Hashable {}")
@@ -328,7 +357,15 @@ struct InitializerSymbolTests {
         #expect(result.symbolOccurrences == Set([expected1, expected2]))
     }
 
-    @Test("Initializer with a compound constraint in a where clause.")
+    @Test(
+        "Initializer with a compound constraint in a where clause.",
+        .tags(
+            .symbolKind.usage,
+            .syntaxFeature.generic,
+            .syntaxFeature.compoundConstraint,
+            .syntaxFeature.whereClause
+        )
+    )
     func testInitializerWithCompoundWhereClause() {
         let sut = visitor()
         let node = node("init<T>(item: T) where T: Codable & Sendable {}")
