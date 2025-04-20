@@ -19,12 +19,16 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     // MARK: Properties
 
+    private var sourceLocationConverter: SourceLocationConverter!
+
     private var symbolOccurrences: Set<SyntaxSymbolOccurrence> = []
     private var imports: Set<String> = []
 
-    private var sourceLocationConverter: SourceLocationConverter!
     private var scopeStack: [String] = []
     private var genericTypeParameters: Set<String> = []
+
+    private var localVariablesStack: [String] = []
+    private var currentScopeVariables: Set<String> = []
 
     // MARK: Initialization
 
@@ -84,7 +88,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         for param in clause.parameters {
             genericTypeParameters.insert(param.name.text)
             if let inheritedType = param.inheritedType {
-                collectTypeNames(from: inheritedType)
+                walk(inheritedType)
             }
         }
     }
@@ -94,7 +98,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     }
 
     private func shouldRecordSymbol(_ name: String) -> Bool {
-        return !genericTypeParameters.contains(name)
+        return !genericTypeParameters.contains(name) && !localVariablesStack.contains(name)
     }
 
     // MARK: - Visitor
@@ -110,43 +114,28 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     override func visit(_ node: VariableDeclSyntax) -> SyntaxVisitorContinueKind {
         for binding in node.bindings {
-            if let typeAnnotation = binding.typeAnnotation {
-                collectTypeNames(from: typeAnnotation.type)
+            if let pattern = binding.pattern.as(IdentifierPatternSyntax.self) {
+                let variableName = pattern.identifier.text
+                currentScopeVariables.insert(variableName)
+                localVariablesStack.append(variableName)
             }
-            if let initializer = binding.initializer?.value {
-                processExpressionForTypes(initializer)
+            if let initializer = binding.initializer {
+                walk(initializer)
+            }
+            if let annotation = binding.typeAnnotation {
+                walk(annotation)
             }
         }
+
         processAttributes(node.attributes)
-        return .visitChildren
+        return .skipChildren
     }
 
-    // MARK: Type Expressions
-
-    override func visit(_ node: TypeExprSyntax) -> SyntaxVisitorContinueKind {
-        collectTypeNames(from: node.type)
-        return .visitChildren
-    }
-
-    override func visit(_ node: ImplicitlyUnwrappedOptionalTypeSyntax) -> SyntaxVisitorContinueKind {
-        collectTypeNames(from: node.wrappedType)
-        return .visitChildren
-    }
-
-    override func visit(_ node: ClosureExprSyntax) -> SyntaxVisitorContinueKind {
-        if let signature = node.signature {
-            if case let .parameterClause(parameterClause) = signature.parameterClause {
-                for param in parameterClause.parameters {
-                    if let typeAnnotation = param.type {
-                        collectTypeNames(from: typeAnnotation)
-                    }
-                }
-            }
-            if let returnClause = signature.returnClause {
-                collectTypeNames(from: returnClause.type)
-            }
+    override func visitPost(_ node: CodeBlockSyntax) {
+        currentScopeVariables.forEach { _ in
+            localVariablesStack.removeLast()
         }
-        return .visitChildren
+        currentScopeVariables.removeAll()
     }
 
     // MARK: Initializer and Function Signatures
@@ -157,16 +146,19 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             processGenericWhereClause(whereClause)
         }
         for param in node.signature.parameterClause.parameters {
-            collectTypeNames(from: param.type)
+            walk(param.type)
         }
         if let throwsClause = node.signature.effectSpecifiers?.throwsClause {
             if let throwingType = throwsClause.type {
-                collectTypeNames(from: throwingType)
+                walk(throwingType)
             }
         }
-        let name = "init"
-        scopeStack.append(name)
-        return .visitChildren
+
+        scopeStack.append("init")
+        if let codeBlock = node.body {
+            walk(codeBlock)
+        }
+        return .skipChildren
     }
 
     override func visitPost(_ node: InitializerDeclSyntax) {
@@ -177,26 +169,25 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
         collectGenericParameters(from: node.genericParameterClause)
         if let returnType = node.signature.returnClause?.type {
-            collectTypeNames(from: returnType)
+            walk(returnType)
         }
         if let whereClause = node.genericWhereClause {
             processGenericWhereClause(whereClause)
         }
         for param in node.signature.parameterClause.parameters {
-            collectTypeNames(from: param.type)
+            walk(param.type)
         }
         if let throwsClause = node.signature.effectSpecifiers?.throwsClause {
             if let throwingType = throwsClause.type {
-                collectTypeNames(from: throwingType)
+                walk(throwingType)
             }
         }
-        scopeStack.append(uniqueFunctionIdentifier(node))
-        return .visitChildren
-    }
 
-    override func visitPost(_ node: FunctionDeclSyntax) {
-        _ = scopeStack.popLast()
-        resetGenericParameters()
+        scopeStack.append(uniqueFunctionIdentifier(node))
+        if let codeBlock = node.body {
+            walk(codeBlock)
+        }
+        return .skipChildren
     }
 
     private func uniqueFunctionIdentifier(_ node: FunctionDeclSyntax) -> String {
@@ -209,20 +200,13 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return "\(name)(\(parameterLabels)):\(returnType)"
     }
 
-    // MARK: - Function Calls
-
-    override func visit(_ node: FunctionCallExprSyntax) -> SyntaxVisitorContinueKind {
-        processExpressionForTypes(node.calledExpression)
-        return .visitChildren
-    }
-
     // MARK: Subscript
 
     override func visit(_ node: SubscriptDeclSyntax) -> SyntaxVisitorContinueKind {
         for param in node.parameterClause.parameters {
-            collectTypeNames(from: param.type)
+            walk(param.type)
         }
-        collectTypeNames(from: node.returnClause.type)
+        walk(node.returnClause.type)
         return .visitChildren
     }
 
@@ -239,13 +223,14 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         )
         collectGenericParameters(from: node.genericParameterClause)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
-            collectTypeNames(from: inheritance.type)
+            walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
             processGenericWhereClause(whereClause)
         }
         scopeStack.append(node.name.text)
-        return .visitChildren
+        walk(node.memberBlock)
+        return .skipChildren
     }
 
     override func visitPost(_ node: StructDeclSyntax) {
@@ -264,16 +249,43 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         )
         collectGenericParameters(from: node.genericParameterClause)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
-            collectTypeNames(from: inheritance.type)
+            walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
             processGenericWhereClause(whereClause)
         }
         scopeStack.append(node.name.text)
-        return .visitChildren
+        walk(node.memberBlock)
+        return .skipChildren
     }
 
     override func visitPost(_ node: ClassDeclSyntax) {
+        _ = scopeStack.popLast()
+        resetGenericParameters()
+    }
+
+    // MARK: Actor
+
+    override func visit(_ node: ActorDeclSyntax) -> SyntaxVisitorContinueKind {
+        recordOccurrence(
+            name: node.name.text,
+            kind: .definition(.actor),
+            location: location(from: Syntax(node)),
+            fullyQualifiedName: fullyQualifiedName(for: node.name.text)
+        )
+        collectGenericParameters(from: node.genericParameterClause)
+        for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
+            walk(inheritance.type)
+        }
+        if let whereClause = node.genericWhereClause {
+            processGenericWhereClause(whereClause)
+        }
+        scopeStack.append(node.name.text)
+        walk(node.memberBlock)
+        return .skipChildren
+    }
+
+    override func visitPost(_ node: ActorDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
@@ -289,24 +301,30 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         )
         collectGenericParameters(from: node.genericParameterClause)
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
-            collectTypeNames(from: inheritance.type)
+            walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
             processGenericWhereClause(whereClause)
         }
         scopeStack.append(node.name.text)
-        return .visitChildren
+        walk(node.memberBlock)
+        return .skipChildren
     }
 
     override func visit(_ node: EnumCaseDeclSyntax) -> SyntaxVisitorContinueKind {
         for element in node.elements {
             if let paramClause = element.parameterClause {
                 for param in paramClause.parameters {
-                    collectTypeNames(from: param.type)
+                    walk(param.type)
                 }
             }
         }
         return .visitChildren
+    }
+
+    override func visitPost(_ node: EnumDeclSyntax) {
+        _ = scopeStack.popLast()
+        resetGenericParameters()
     }
 
     // MARK: Typealias
@@ -319,11 +337,11 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
         collectGenericParameters(from: node.genericParameterClause)
-        collectTypeNames(from: node.initializer.value)
+        walk(node.initializer.value)
         if let whereClause = node.genericWhereClause {
             processGenericWhereClause(whereClause)
         }
-        return .visitChildren
+        return .skipChildren
     }
 
     override func visitPost(_ node: TypeAliasDeclSyntax) {
@@ -340,15 +358,15 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
         if let initializer = node.initializer?.value {
-            collectTypeNames(from: initializer)
+            walk(initializer)
         }
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
-            collectTypeNames(from: inheritance.type)
+            walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
             processGenericWhereClause(whereClause)
         }
-        return .visitChildren
+        return .skipChildren
     }
 
     // MARK: Protocol
@@ -361,10 +379,11 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             fullyQualifiedName: fullyQualifiedName(for: node.name.text)
         )
         for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
-            collectTypeNames(from: inheritance.type)
+            walk(inheritance.type)
         }
         scopeStack.append(node.name.text)
-        return .visitChildren
+        walk(node.memberBlock)
+        return .skipChildren
     }
 
     override func visitPost(_ node: ProtocolDeclSyntax) {
@@ -372,160 +391,93 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         resetGenericParameters()
     }
 
-    // MARK: Actor
+    // MARK: - Type Syntax
 
-    override func visit(_ node: ActorDeclSyntax) -> SyntaxVisitorContinueKind {
-        recordOccurrence(
-            name: node.name.text,
-            kind: .definition(.actor),
-            location: location(from: Syntax(node)),
-            fullyQualifiedName: fullyQualifiedName(for: node.name.text)
-        )
-        collectGenericParameters(from: node.genericParameterClause)
-        for inheritance in node.inheritanceClause?.inheritedTypes ?? [] {
-            collectTypeNames(from: inheritance.type)
+    // Example: Int, String, User
+    override func visit(_ node: IdentifierTypeSyntax) -> SyntaxVisitorContinueKind {
+        let name = node.name.text
+        if shouldRecordSymbol(name) {
+            recordOccurrence(
+                name: name,
+                kind: .usage,
+                location: location(from: Syntax(node)),
+                fullyQualifiedName: name
+            )
         }
-        if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
-        }
-        scopeStack.append(node.name.text)
         return .visitChildren
     }
 
-    override func visitPost(_ node: ActorDeclSyntax) {
-        _ = scopeStack.popLast()
-        resetGenericParameters()
+    // Example: Module.TypeName, Container.Entry
+    override func visit(_ node: MemberTypeSyntax) -> SyntaxVisitorContinueKind {
+        let qualifiedName = node.description.trimmingCharacters(in: .whitespaces)
+        recordOccurrence(
+            name: node.name.text,
+            kind: .usage,
+            location: location(from: Syntax(node)),
+            fullyQualifiedName: qualifiedName
+        )
+        return .skipChildren
+    }
+
+    // MARK: - Expression Syntax
+
+    // Example: Result<String, Error>.success(...)
+    override func visit(_ node: GenericSpecializationExprSyntax) -> SyntaxVisitorContinueKind {
+        walk(node.expression)
+
+        for argument in node.genericArgumentClause.arguments {
+            if case let .type(type) = argument.argument {
+                walk(type)
+            }
+        }
+
+        return .skipChildren
+    }
+
+    // Example: User()
+    override func visit(_ node: DeclReferenceExprSyntax) -> SyntaxVisitorContinueKind {
+        let name = node.baseName.text
+        if shouldRecordSymbol(name) {
+            recordOccurrence(
+                name: name,
+                kind: .usage,
+                location: location(from: Syntax(node)),
+                fullyQualifiedName: name
+            )
+        }
+        return .skipChildren
+    }
+
+    // Example: Foundation.Date.now or Container.Entry()
+    override func visit(_ node: MemberAccessExprSyntax) -> SyntaxVisitorContinueKind {
+        if let base = node.base?.as(DeclReferenceExprSyntax.self),
+           imports.contains(base.baseName.text) {
+            let fqn = "\(base.baseName.text).\(node.declName.baseName.text)"
+            recordOccurrence(
+                name: node.declName.baseName.text,
+                kind: .usage,
+                location: location(from: Syntax(node)),
+                fullyQualifiedName: fqn
+            )
+            return .skipChildren
+        }
+
+        if let base = node.base {
+            walk(base)
+        }
+
+        return .skipChildren
+    }
+
+    // Example: \User.name
+    override func visit(_ node: KeyPathExprSyntax) -> SyntaxVisitorContinueKind {
+        if let root = node.root {
+            walk(root)
+        }
+        return .skipChildren
     }
 
     // MARK: - Helpers
-
-    /// Recursively collects type names from a given type syntax node.
-    private func collectTypeNames(from typeSyntax: TypeSyntax) {
-
-        if let identifier = typeSyntax.as(IdentifierTypeSyntax.self) {
-            // If the type is a simple identifier (AVAsset or Set)
-            let name = identifier.name.text
-
-            // Only record if the name starts with an uppercase letter and isn’t a generic parameter.
-            if shouldRecordSymbol(name) {
-                recordOccurrence(
-                    name: name,
-                    kind: .usage,
-                    location: location(from: Syntax(identifier)),
-                    fullyQualifiedName: name
-                )
-            }
-
-            // If there are generic arguments (Set<AnyCancellable>), recursively process each argument.
-            if let genericArgs = identifier.genericArgumentClause {
-                genericArgs.arguments.forEach {
-                    if case let .type(syntax) = $0.argument {
-                        collectTypeNames(from: syntax)
-                    }
-                }
-            }
-
-        } else if let member = typeSyntax.as(MemberTypeSyntax.self) {
-            // If the type is a member type (qualified name) like "Module.TypeName".
-            // Record the right-hand name as the type.
-            recordOccurrence(
-                name: member.name.text,
-                kind: .usage,
-                location: location(from: Syntax(member)),
-                fullyQualifiedName: member.description
-            )
-
-        } else if let optional = typeSyntax.as(OptionalTypeSyntax.self) {
-            collectTypeNames(from: optional.wrappedType)
-
-        } else if let array = typeSyntax.as(ArrayTypeSyntax.self) {
-            collectTypeNames(from: array.element)
-
-        } else if let dictionary = typeSyntax.as(DictionaryTypeSyntax.self) {
-            collectTypeNames(from: dictionary.key)
-            collectTypeNames(from: dictionary.value)
-
-        } else if let tuple = typeSyntax.as(TupleTypeSyntax.self) {
-            tuple.elements.forEach {
-                collectTypeNames(from: $0.type)
-            }
-
-        } else if let function = typeSyntax.as(FunctionTypeSyntax.self) {
-            collectTypeNames(from: function.returnClause.type)
-            function.parameters.forEach {
-                collectTypeNames(from: $0.type)
-            }
-
-        } else if let composition = typeSyntax.as(CompositionTypeSyntax.self) {
-            composition.elements.forEach {
-                collectTypeNames(from: $0.type)
-            }
-
-        } else if let someOrAny = typeSyntax.as(SomeOrAnyTypeSyntax.self) {
-            collectTypeNames(from: someOrAny.constraint)
-        }
-    }
-
-    /// Processes an expression syntax node to extract type names.
-    private func processExpressionForTypes(_ expr: ExprSyntax) {
-        if let call = expr.as(FunctionCallExprSyntax.self) {
-            // If the expression is a function call.
-            // Recursively process the called expression.
-
-            processExpressionForTypes(call.calledExpression)
-
-        } else if let typeExpr = expr.as(TypeExprSyntax.self) {
-            // If the expression is a type expression (explicitly cast or referenced as a type).
-            collectTypeNames(from: typeExpr.type)
-
-        } else if let identifier = expr.as(DeclReferenceExprSyntax.self) {
-            // If the expression is a simple identifier reference (a bare type name)
-            let name = identifier.baseName.text
-            if shouldRecordSymbol(name) {
-                recordOccurrence(
-                    name: name,
-                    kind: .usage,
-                    location: location(from: Syntax(identifier)),
-                    fullyQualifiedName: name
-                )
-            }
-
-        } else if let member = expr.as(MemberAccessExprSyntax.self) {
-            // If the member access has a base, check if it is an imported module.
-            if let base = member.base,
-               let baseID = base.as(DeclReferenceExprSyntax.self),
-               imports.contains(baseID.baseName.text) {
-                // If so, construct the fully qualified name using the module and member.
-                let fqn = "\(baseID.baseName.text).\(member.declName.baseName.text)"
-                recordOccurrence(
-                    name: member.declName.baseName.text,
-                    kind: .usage,
-                    location: location(from: Syntax(member)),
-                    fullyQualifiedName: fqn
-                )
-            } else {
-                let name = member.declName.baseName.text
-                if shouldRecordSymbol(name) {
-                    recordOccurrence(
-                        name: name,
-                        kind: .usage,
-                        location: location(from: Syntax(member)),
-                        fullyQualifiedName: name
-                    )
-                }
-            }
-        } else if let genericSpecialization = expr.as(GenericSpecializationExprSyntax.self) {
-            // If an expression is a generic specialization, separately process the expression
-            // and the generic arguments.
-            processExpressionForTypes(genericSpecialization.expression)
-
-            genericSpecialization.genericArgumentClause.arguments.forEach {
-                if case let .type(syntax) = $0.argument {
-                    collectTypeNames(from: syntax)
-                }
-            }
-        }
-    }
 
     /// Processes property wrapper attributes and collects their type names.
     private func processAttributes(_ attributes: AttributeListSyntax?) {
@@ -551,7 +503,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         for requirement in clause.requirements {
             switch requirement.requirement {
             case let .conformanceRequirement(syntax):
-                collectTypeNames(from: syntax.rightType)
+                walk(syntax.rightType)
 
             case .sameTypeRequirement:
                 break
