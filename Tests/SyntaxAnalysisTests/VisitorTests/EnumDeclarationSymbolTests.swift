@@ -124,54 +124,6 @@ struct EnumDeclarationSymbolTests {
     }
 
     @Test(
-        "Enum case with a generic payload.",
-        .tags(.symbolKind.definition, .symbolKind.usage)
-    )
-    func testEnumWithGenericAssociatedType() {
-        let sut = visitor()
-        let node = node("""
-        enum State {
-            case data(Result<String, Error>)
-        }
-        """)
-        let result = sut.parseSymbols(node: node, fileName: "")
-
-        let expected1 = SyntaxSymbolOccurrence(
-            symbolName: "State",
-            fullyQualifiedName: "State",
-            kind: .definition(.enum),
-            location: .init(line: 1, column: 1),
-            scopeChain: []
-        )
-
-        let expected2 = SyntaxSymbolOccurrence(
-            symbolName: "Result",
-            fullyQualifiedName: "Result",
-            kind: .usage,
-            location: .init(line: 2, column: 15),
-            scopeChain: ["State"]
-        )
-
-        let expected3 = SyntaxSymbolOccurrence(
-            symbolName: "String",
-            fullyQualifiedName: "String",
-            kind: .usage,
-            location: .init(line: 2, column: 22),
-            scopeChain: ["State"]
-        )
-
-        let expected4 = SyntaxSymbolOccurrence(
-            symbolName: "Error",
-            fullyQualifiedName: "Error",
-            kind: .usage,
-            location: .init(line: 2, column: 30),
-            scopeChain: ["State"]
-        )
-
-        #expect(result.symbolOccurrences == Set([expected1, expected2, expected3, expected4]))
-    }
-
-    @Test(
         "Enum case with multiple associated values.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )

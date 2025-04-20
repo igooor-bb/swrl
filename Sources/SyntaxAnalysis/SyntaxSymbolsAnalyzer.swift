@@ -12,13 +12,17 @@ import SwiftSyntax
 
 public final class SyntaxSymbolsAnalyzer {
 
+    // MARK: Properties
+
     private let visitor = SyntaxSymbolsVisitor()
 
     public init () {}
 
+    // MARK: Analysis
+
     public func analyzeFile(
         at url: URL,
-        options: SwiftSymbolsAnalyzerOptions = [.includeDefinitions, .includeUsages]
+        options: SwiftSymbolsAnalyzerOptions = .default
     ) throws -> SyntaxSymbolsAnalysis {
         let content = try String(contentsOf: url)
         let node = SwiftParser.Parser.parse(source: content)
@@ -36,6 +40,8 @@ public final class SyntaxSymbolsAnalyzer {
             imports: imports
         )
     }
+
+    // MARK: Evaluation
 
     private func filterStaticallyResolvableUsages(
         from occurrences: Set<SyntaxSymbolOccurrence>,

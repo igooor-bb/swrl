@@ -94,7 +94,6 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     }
 
     private func shouldRecordSymbol(_ name: String) -> Bool {
-        guard let first = name.first, first.isUppercase else { return false }
         return !genericTypeParameters.contains(name)
     }
 
@@ -419,8 +418,10 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
             // If there are generic arguments (Set<AnyCancellable>), recursively process each argument.
             if let genericArgs = identifier.genericArgumentClause {
-                for arg in genericArgs.arguments {
-                    collectTypeNames(from: arg.argument)
+                genericArgs.arguments.forEach {
+                    if case let .type(syntax) = $0.argument {
+                        collectTypeNames(from: syntax)
+                    }
                 }
             }
 
@@ -467,50 +468,11 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     /// Processes an expression syntax node to extract type names.
     private func processExpressionForTypes(_ expr: ExprSyntax) {
-
         if let call = expr.as(FunctionCallExprSyntax.self) {
             // If the expression is a function call.
             // Recursively process the called expression.
 
             processExpressionForTypes(call.calledExpression)
-
-            // Retrieve the full text of the call. This text contains the generic arguments.
-            let callText = call.description
-            // We use the location for the call as the location for any generic argument occurrences.
-            let callLocation = location(from: Syntax(call))
-
-            // Check if there is a trailing closure.
-            if let braceIndex = callText.firstIndex(of: "{"),
-               let genericIndex = callText.firstIndex(of: "<"),
-               braceIndex < genericIndex {
-                return
-            }
-
-            // Look for the generic argument clause delimiters in the call text.
-            if let genericStart = callText.firstIndex(of: "<"),
-               let genericEnd = callText.firstIndex(of: ">") {
-
-                let baseName = String(callText[callText.startIndex..<genericStart])
-                if shouldRecordSymbol(baseName) {
-                    recordOccurrence(
-                        name: baseName,
-                        kind: .usage,
-                        location: callLocation,
-                        fullyQualifiedName: baseName
-                    )
-                }
-
-                let genericSubstring = callText[callText.index(after: genericStart)..<genericEnd]
-                let genericArgs = genericSubstring.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-                for arg in genericArgs where shouldRecordSymbol(arg) {
-                    recordOccurrence(
-                        name: arg,
-                        kind: .usage,
-                        location: callLocation,
-                        fullyQualifiedName: arg
-                    )
-                }
-            }
 
         } else if let typeExpr = expr.as(TypeExprSyntax.self) {
             // If the expression is a type expression (explicitly cast or referenced as a type).
@@ -550,6 +512,16 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                         location: location(from: Syntax(member)),
                         fullyQualifiedName: name
                     )
+                }
+            }
+        } else if let genericSpecialization = expr.as(GenericSpecializationExprSyntax.self) {
+            // If an expression is a generic specialization, separately process the expression
+            // and the generic arguments.
+            processExpressionForTypes(genericSpecialization.expression)
+
+            genericSpecialization.genericArgumentClause.arguments.forEach {
+                if case let .type(syntax) = $0.argument {
+                    collectTypeNames(from: syntax)
                 }
             }
         }
