@@ -16,6 +16,11 @@ extension Tag {
         @Tag static var usage: Tag
     }
 
+    enum semantics {
+        @Tag static var declaration: Tag
+        @Tag static var expression: Tag
+    }
+
     enum syntaxFeature {
         @Tag static var generic: Tag
         @Tag static var constraint: Tag

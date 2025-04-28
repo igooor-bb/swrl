@@ -127,7 +127,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             }
         }
 
-        processAttributes(node.attributes)
+        walk(node.attributes)
         return .skipChildren
     }
 
@@ -143,7 +143,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     override func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
         collectGenericParameters(from: node.genericParameterClause)
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         for param in node.signature.parameterClause.parameters {
             walk(param.type)
@@ -172,7 +172,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             walk(returnType)
         }
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         for param in node.signature.parameterClause.parameters {
             walk(param.type)
@@ -226,7 +226,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         scopeStack.append(node.name.text)
         walk(node.memberBlock)
@@ -252,7 +252,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         scopeStack.append(node.name.text)
         walk(node.memberBlock)
@@ -278,7 +278,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         scopeStack.append(node.name.text)
         walk(node.memberBlock)
@@ -304,7 +304,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         scopeStack.append(node.name.text)
         walk(node.memberBlock)
@@ -339,7 +339,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         collectGenericParameters(from: node.genericParameterClause)
         walk(node.initializer.value)
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         return .skipChildren
     }
@@ -364,7 +364,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             walk(inheritance.type)
         }
         if let whereClause = node.genericWhereClause {
-            processGenericWhereClause(whereClause)
+            walk(whereClause)
         }
         return .skipChildren
     }
@@ -479,11 +479,25 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     // MARK: - Helpers
 
-    /// Processes property wrapper attributes and collects their type names.
-    private func processAttributes(_ attributes: AttributeListSyntax?) {
-        guard let attributes else { return }
+    override func visit(_ node: GenericWhereClauseSyntax) -> SyntaxVisitorContinueKind {
+        for requirement in node.requirements {
+            switch requirement.requirement {
+            case let .conformanceRequirement(syntax):
+                walk(syntax.rightType)
 
-        for attribute in attributes {
+            case .sameTypeRequirement:
+                break
+
+            case .layoutRequirement:
+                break
+            }
+        }
+        return .skipChildren
+    }
+
+    /// Processes property wrapper attributes and collects their type names.
+    override func visit(_ node: AttributeListSyntax) -> SyntaxVisitorContinueKind {
+        for attribute in node {
             if let attr = attribute.as(AttributeSyntax.self),
                let wrapperName = attr.attributeName.as(IdentifierTypeSyntax.self) {
                 let name = wrapperName.name.text
@@ -497,20 +511,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
                 }
             }
         }
-    }
 
-    private func processGenericWhereClause(_ clause: GenericWhereClauseSyntax) {
-        for requirement in clause.requirements {
-            switch requirement.requirement {
-            case let .conformanceRequirement(syntax):
-                walk(syntax.rightType)
-
-            case .sameTypeRequirement:
-                break
-
-            case .layoutRequirement:
-                break
-            }
-        }
+        return .skipChildren
     }
 }
