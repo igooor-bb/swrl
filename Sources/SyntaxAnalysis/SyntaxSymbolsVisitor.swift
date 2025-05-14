@@ -15,6 +15,11 @@ struct SyntaxVisitorResult {
     let imports: Set<String>
 }
 
+struct LocalVariableOccurrence: Hashable {
+    let name: String
+    let scopeChain: [String]
+}
+
 final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     // MARK: Properties
@@ -27,8 +32,8 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     private var scopeStack: [String] = []
     private var genericTypeParameters: Set<String> = []
 
-    private var localVariablesStack: [String] = []
-    private var currentScopeVariables: Set<String> = []
+    private var localVariables: Set<LocalVariableOccurrence> = []
+    private var isInsideCatchClause = false
 
     // MARK: Initialization
 
@@ -54,6 +59,8 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         imports.removeAll()
         scopeStack.removeAll()
         genericTypeParameters.removeAll()
+        localVariables.removeAll()
+        isInsideCatchClause = false
     }
 
     // MARK: Recording Occurrences and Scope Helpers
@@ -98,7 +105,24 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     }
 
     private func shouldRecordSymbol(_ name: String) -> Bool {
-        return !genericTypeParameters.contains(name) && !localVariablesStack.contains(name)
+        guard !name.isEmpty else {
+            return false
+        }
+
+        let isGenericParameter = genericTypeParameters.contains(name)
+        let isSynthesizedVariable = isInsideCatchClause && name == "error"
+
+        // TODO: Resolve function symbols
+        let isFunction = name[name.startIndex].isLowercase
+
+        let isLocalVariable = {
+            let foundLocalVariable = localVariables.first { occ in
+                occ.name == name && occ.scopeChain.isPrefix(to: scopeStack)
+            }
+            return foundLocalVariable != nil
+        }()
+
+        return !isGenericParameter && !isLocalVariable && !isSynthesizedVariable && !isFunction
     }
 
     // MARK: - Visitor
@@ -116,8 +140,11 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         for binding in node.bindings {
             if let pattern = binding.pattern.as(IdentifierPatternSyntax.self) {
                 let variableName = pattern.identifier.text
-                currentScopeVariables.insert(variableName)
-                localVariablesStack.append(variableName)
+                let occurrence = LocalVariableOccurrence(
+                    name: variableName,
+                    scopeChain: scopeStack
+                )
+                localVariables.insert(occurrence)
             }
             if let initializer = binding.initializer {
                 walk(initializer)
@@ -131,21 +158,22 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: CodeBlockSyntax) {
-        currentScopeVariables.forEach { _ in
-            localVariablesStack.removeLast()
-        }
-        currentScopeVariables.removeAll()
-    }
-
     // MARK: Initializer and Function Signatures
 
     override func visit(_ node: InitializerDeclSyntax) -> SyntaxVisitorContinueKind {
+        let scopeName = "init"
+
         collectGenericParameters(from: node.genericParameterClause)
         if let whereClause = node.genericWhereClause {
             walk(whereClause)
         }
         for param in node.signature.parameterClause.parameters {
+            let paramName = param.secondName ?? param.firstName
+            let occurrence = LocalVariableOccurrence(
+                name: paramName.text,
+                scopeChain: scopeStack + [scopeName]
+            )
+            localVariables.insert(occurrence)
             walk(param.type)
         }
         if let throwsClause = node.signature.effectSpecifiers?.throwsClause {
@@ -154,7 +182,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             }
         }
 
-        scopeStack.append("init")
+        scopeStack.append(scopeName)
         if let codeBlock = node.body {
             walk(codeBlock)
         }
@@ -167,6 +195,8 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     }
 
     override func visit(_ node: FunctionDeclSyntax) -> SyntaxVisitorContinueKind {
+        let scopeName = uniqueFunctionIdentifier(node)
+
         collectGenericParameters(from: node.genericParameterClause)
         if let returnType = node.signature.returnClause?.type {
             walk(returnType)
@@ -175,6 +205,12 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             walk(whereClause)
         }
         for param in node.signature.parameterClause.parameters {
+            let paramName = param.secondName ?? param.firstName
+            let occurrence = LocalVariableOccurrence(
+                name: paramName.text,
+                scopeChain: scopeStack + [scopeName]
+            )
+            localVariables.insert(occurrence)
             walk(param.type)
         }
         if let throwsClause = node.signature.effectSpecifiers?.throwsClause {
@@ -183,11 +219,25 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
             }
         }
 
-        scopeStack.append(uniqueFunctionIdentifier(node))
+        scopeStack.append(scopeName)
         if let codeBlock = node.body {
             walk(codeBlock)
         }
         return .skipChildren
+    }
+
+    override func visitPost(_ node: FunctionDeclSyntax) {
+        _ = scopeStack.popLast()
+        resetGenericParameters()
+    }
+
+    override func visit(_ node: CatchClauseSyntax) -> SyntaxVisitorContinueKind {
+        isInsideCatchClause = true
+        return .visitChildren
+    }
+
+    override func visitPost(_ node: CatchClauseSyntax) {
+        isInsideCatchClause = false
     }
 
     private func uniqueFunctionIdentifier(_ node: FunctionDeclSyntax) -> String {
@@ -311,6 +361,20 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
+    // MARK: Extension
+
+    override func visit(_ node: ExtensionDeclSyntax) -> SyntaxVisitorContinueKind {
+        if let typeSyntax = node.extendedType.as(IdentifierTypeSyntax.self) {
+            let extendedTypeName = typeSyntax.name.text
+            scopeStack.append(extendedTypeName)
+        }
+        return .visitChildren
+    }
+
+    override func visitPost(_ node: ExtensionDeclSyntax) {
+        _ = scopeStack.popLast()
+    }
+
     override func visit(_ node: EnumCaseDeclSyntax) -> SyntaxVisitorContinueKind {
         for element in node.elements {
             if let paramClause = element.parameterClause {
@@ -410,12 +474,15 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     // Example: Module.TypeName, Container.Entry
     override func visit(_ node: MemberTypeSyntax) -> SyntaxVisitorContinueKind {
         let qualifiedName = node.description.trimmingCharacters(in: .whitespaces)
-        recordOccurrence(
-            name: node.name.text,
-            kind: .usage,
-            location: location(from: Syntax(node)),
-            fullyQualifiedName: qualifiedName
-        )
+        let name = node.name.text
+        if shouldRecordSymbol(name) {
+            recordOccurrence(
+                name: name,
+                kind: .usage,
+                location: location(from: Syntax(node)),
+                fullyQualifiedName: qualifiedName
+            )
+        }
         return .skipChildren
     }
 
@@ -436,6 +503,10 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     // Example: User()
     override func visit(_ node: DeclReferenceExprSyntax) -> SyntaxVisitorContinueKind {
+        guard case .identifier = node.baseName.tokenKind else {
+            return .skipChildren
+        }
+
         let name = node.baseName.text
         if shouldRecordSymbol(name) {
             recordOccurrence(
