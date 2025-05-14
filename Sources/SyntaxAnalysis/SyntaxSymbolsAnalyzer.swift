@@ -12,50 +12,56 @@ import SwiftSyntax
 
 public final class SyntaxSymbolsAnalyzer {
 
+    private static let swiftBuiltInTypes: Set<String> = [
+        "Bool", "String", "Int", "Double", "Float", "Any", "AnyObject", "AnyHashable", "Never", "Optional", "Void"
+    ]
+
+    // MARK: Properties
+
     public init () {}
+
+    // MARK: Analysis
 
     public func analyzeFile(
         at url: URL,
-        options: SwiftSymbolsAnalyzerOptions = [.includeDefinitions, .includeUsages]
+        options: SwiftSymbolsAnalyzerOptions = .default
     ) throws -> SyntaxSymbolsAnalysis {
         let content = try String(contentsOf: url)
-
         let node = SwiftParser.Parser.parse(source: content)
-        let sourceLocationConverter = SourceLocationConverter(
-            fileName: url.lastPathComponent,
-            tree: node
-        )
-        let visitor = SyntaxSymbolsVisitor(
-            fileURL: url,
-            options: options,
-            sourceLocationConverter: sourceLocationConverter
-        )
+        let visitor = SyntaxSymbolsVisitor()
+        let result = visitor.parseSymbols(node: node, fileName: url.lastPathComponent)
+        let imports = result.imports
+        var symbolOccurrences = result.symbolOccurrences
 
-        visitor.walk(node)
-        let symbolOccurrences = visitor.symbolOccurrences
-        let imports = visitor.imports
-
-        let filteredOccurrences = filterStaticallyResolvableUsages(
-            from: symbolOccurrences,
-            withImports: imports
-        )
-
-        return SyntaxSymbolsAnalysis(
-            symbols: filteredOccurrences,
-            imports: imports
-        )
+        filterOccurrences(&symbolOccurrences, using: options)
+        filterStaticallyResolvableOccurrences(&symbolOccurrences, withImports: imports)
+        return SyntaxSymbolsAnalysis(symbols: Array(symbolOccurrences), imports: imports)
     }
 
-    private func filterStaticallyResolvableUsages(
-        from occurrences: Set<SyntaxSymbolOccurrence>,
+    // MARK: Evaluation
+
+    private func filterOccurrences(
+        _ occurrences: inout Set<SyntaxSymbolOccurrence>,
+        using options: SwiftSymbolsAnalyzerOptions
+    ) {
+        occurrences = occurrences.filter {
+            let isDefinition = $0.kind.isDefinition && options.contains(.includeDefinitions)
+            let isUsage = $0.kind.isUsage && options.contains(.includeUsages)
+            let isBuiltIn = Self.swiftBuiltInTypes.contains($0.symbolName)
+            return (isUsage || isDefinition) && !isBuiltIn
+        }
+    }
+
+    private func filterStaticallyResolvableOccurrences(
+        _ occurrences: inout Set<SyntaxSymbolOccurrence>,
         withImports imports: Set<String>
-    ) -> [SyntaxSymbolOccurrence] {
+    ) {
         var localDefinitions: [String: [SyntaxSymbolOccurrence]] = [:]
         for occ in occurrences where occ.kind.isDefinition {
             localDefinitions[occ.symbolName, default: []].append(occ)
         }
 
-        return occurrences.filter { occ in
+        occurrences = occurrences.filter { occ in
             // Always keep definitions.
             if occ.kind.isDefinition {
                 return true

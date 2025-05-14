@@ -30,7 +30,7 @@ extension SymbolResolution {
     ) -> SymbolResolution {
         let foundModuleName = occurrence.location.moduleName
         let origin: ResolvedSymbolOrigin
-        
+
         if occurrence.location.isSystem {
             origin = .system
         } else if foundModuleName == currentModuleName {
@@ -38,14 +38,14 @@ extension SymbolResolution {
         } else {
             origin = .externalModule(foundModuleName)
         }
-        
+
         return SymbolResolution(
             targetSymbol: symbol,
             origin: origin,
             originKind: SymbolDefinitionKind(from: occurrence.symbol.kind)
         )
     }
-    
+
     static func system(
         symbol: SyntaxSymbolOccurrence
     ) -> SymbolResolution {
@@ -55,7 +55,7 @@ extension SymbolResolution {
             originKind: .unknown
         )
     }
-    
+
     static func external(
         symbol: SyntaxSymbolOccurrence,
         originKind: SymbolDefinitionKind,
@@ -67,7 +67,7 @@ extension SymbolResolution {
             originKind: originKind
         )
     }
-    
+
     static func `internal`(
         symbol: SyntaxSymbolOccurrence,
         originKind: SymbolDefinitionKind,
@@ -79,7 +79,7 @@ extension SymbolResolution {
             originKind: originKind
         )
     }
-    
+
     static func unknown(
         symbol: SyntaxSymbolOccurrence
     ) -> SymbolResolution {

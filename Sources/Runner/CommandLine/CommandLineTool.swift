@@ -32,7 +32,7 @@ final class CommandLineTool {
             .apply(performSyntaxAnalysis)
             .apply(performSymbolsResolution)
     }
-    
+
     // MARK: Processing
 
     // Step 1

@@ -21,11 +21,11 @@ enum SymbolResolverError: Error, CustomStringConvertible {
 }
 
 public final class SymbolsResolver: @unchecked Sendable {
-    
+
     // MARK: - Nested Types
-    
+
     private typealias IndexStoreSymbolOccurrence = SymbolOccurrence
-    
+
     private enum IndexStoreLookup {
         case resolved([IndexStoreSymbolOccurrence])
         case system

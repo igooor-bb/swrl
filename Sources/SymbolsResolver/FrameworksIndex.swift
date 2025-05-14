@@ -15,14 +15,14 @@ public protocol FrameworkDefinitionsAnalyzer {
 }
 
 final class FrameworksIndex {
-    
+
     // MARK: Nested Types
-    
+
     struct FrameworkSymbolLookup {
         let frameworkName: String
         let symbol: SyntaxSymbolOccurrence
     }
-    
+
     // MARK: Properties
 
     private let indexStoreURL: URL
@@ -42,7 +42,7 @@ final class FrameworksIndex {
     func prewarm() {
         frameworkDirectoryByName = findFrameworkDirectories(in: indexStoreURL)
     }
-    
+
     // MARK: Interface
 
     func resolveSymbols(
@@ -83,7 +83,7 @@ final class FrameworksIndex {
 
         return resolvedSymbols
     }
-    
+
     // MARK: - Helpers
 
     private func interfaceContentForFramework(_ framework: String, at url: URL) -> URL? {

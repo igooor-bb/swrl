@@ -16,4 +16,6 @@ public struct SwiftSymbolsAnalyzerOptions: OptionSet, Sendable {
 
     public static let includeDefinitions = SwiftSymbolsAnalyzerOptions(rawValue: 1 << 0)
     public static let includeUsages = SwiftSymbolsAnalyzerOptions(rawValue: 1 << 1)
+
+    public static let `default`: Self = [.includeDefinitions, .includeUsages]
 }
