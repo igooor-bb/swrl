@@ -12,7 +12,11 @@ struct InputFile: ExpressibleByArgument {
         url.pathExtension
     }
 
+    init(path: String) {
+        url = URL(expandingPath: path)
+    }
+
     init?(argument: String) {
-        url = URL(expandingPath: argument)
+        self.init(path: argument)
     }
 }

@@ -58,7 +58,7 @@ struct CommandLineRunner: AsyncParsableCommand {
         let outputs = try await processFiles(totalFiles, resolver: resolver, logger: logger)
 
         let dumper = CommandLineResultDumper()
-        let outputFile = output ?? InputFile(argument: Self.defaultOutputFileName)!
+        let outputFile = output ?? InputFile(path: Self.defaultOutputFileName)
         try dumper.dump(outputs, to: outputFile)
 
         logger.printNewLine()

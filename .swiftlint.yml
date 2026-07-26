@@ -7,6 +7,10 @@ excluded:
   - .build
 
 disabled_rules:
+  # SwiftFormat owns these formatting decisions.
+  - opening_brace
+  - sorted_imports
+  - trailing_comma
   - file_length
   - type_body_length
   - function_body_length
@@ -19,6 +23,16 @@ opt_in_rules:
   - empty_count
   - comment_spacing
   - force_unwrapping
-  - sorted_imports
 
 warning_threshold: 3
+
+cyclomatic_complexity:
+  warning: 15
+  error: 25
+
+type_name:
+  excluded:
+    # Swift Testing tag namespaces intentionally use lower camel case at call sites.
+    - symbolKind
+    - semantics
+    - syntaxFeature

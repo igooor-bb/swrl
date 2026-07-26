@@ -31,10 +31,6 @@ let package = Package(
             url: "https://github.com/onevcat/Rainbow.git",
             .upToNextMajor(from: "4.0.0")
         ),
-        .package(
-            url: "https://github.com/SimplyDanny/SwiftLintPlugins.git",
-            .upToNextMajor(from: "0.58.2")
-        ),
     ],
     targets: [
         .executableTarget(
