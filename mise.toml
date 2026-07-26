@@ -7,3 +7,91 @@ lockfile_platforms = ["macos-arm64", "macos-x64"]
 [tools]
 swiftformat = "0.62.1"
 swiftlint = "0.63.2"
+
+[tasks.doctor]
+description = "Verify the active Xcode and Swift toolchain"
+run = '''
+set -eu
+
+swift_version="$(swift --version)"
+case "$swift_version" in
+  *"Swift version 6.3"*) ;;
+  *)
+    echo "Expected Swift 6.3 from the active Xcode, but found: $swift_version" >&2
+    exit 1
+    ;;
+esac
+
+developer_dir="${DEVELOPER_DIR:-}"
+if [ -z "$developer_dir" ]; then
+  developer_dir="$(xcode-select -p)"
+fi
+
+if [ ! -x "$developer_dir/usr/bin/xcodebuild" ]; then
+  echo "xcodebuild was not found under $developer_dir" >&2
+  exit 1
+fi
+
+index_store_library="$developer_dir/Toolchains/XcodeDefault.xctoolchain/usr/lib/libIndexStore.dylib"
+if [ ! -f "$index_store_library" ]; then
+  echo "libIndexStore was not found at $index_store_library" >&2
+  exit 1
+fi
+
+echo "Toolchain ready: $developer_dir"
+'''
+
+[tasks.format]
+description = "Format Swift sources"
+run = "swiftformat --cache ignore Package.swift Sources Tests"
+
+[tasks."format:check"]
+description = "Check Swift source formatting"
+run = "swiftformat --lint --cache ignore Package.swift Sources Tests"
+
+[tasks.lint]
+description = "Run strict SwiftLint checks"
+run = "swiftlint lint --strict --no-cache --config .swiftlint.yml"
+
+[tasks.test]
+description = "Run the test suite"
+run = "swift test"
+
+[tasks.build]
+description = "Build the release executable"
+run = "swift build -c release"
+
+[tasks.check]
+description = "Run all project checks in order"
+run = '''
+set -eu
+mise run doctor
+mise run format:check
+mise run lint
+mise run test
+mise run build
+'''
+
+[tasks.clean]
+description = "Remove SwiftPM build artifacts"
+run = "swift package clean"
+
+[tasks.install]
+description = "Install swrl into SWRL_INSTALL_DIR (default: ~/.local/bin)"
+depends = ["build"]
+run = '''
+set -eu
+install_dir="${SWRL_INSTALL_DIR:-$HOME/.local/bin}"
+install -d "$install_dir"
+install ".build/release/swrl" "$install_dir/swrl"
+echo "Installed swrl to $install_dir/swrl"
+'''
+
+[tasks.uninstall]
+description = "Remove swrl from SWRL_INSTALL_DIR (default: ~/.local/bin)"
+run = '''
+set -eu
+install_dir="${SWRL_INSTALL_DIR:-$HOME/.local/bin}"
+rm -f "$install_dir/swrl"
+echo "Uninstalled swrl from $install_dir/swrl"
+'''
