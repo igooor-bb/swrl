@@ -1,16 +1,8 @@
-//
-//  FileAnalysisContext.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 08.04.2025.
-//
-
 import Common
 import Foundation
 import SymbolsResolver
 
 struct FileAnalysisContext: Sendable {
-
     // Initial file information
     let file: InputFile
     let moduleName: String
@@ -20,13 +12,8 @@ struct FileAnalysisContext: Sendable {
     var declarations: Set<SyntaxSymbolOccurrence> = []
     var dependencies: Set<SyntaxSymbolOccurrence> = []
 
-    // Symbol resolution data
+    /// Symbol resolution data
     var resolvedSymbols: [SymbolResolution] = []
-
-    init(file: InputFile, moduleName: String) {
-        self.file = file
-        self.moduleName = moduleName
-    }
 
     @discardableResult
     func apply<T>(_ transform: (FileAnalysisContext) throws -> T) rethrows -> T {

@@ -6,13 +6,13 @@ import PackageDescription
 let package = Package(
     name: "SwiftLightweightResolver",
     platforms: [
-        .macOS(.v12)
+        .macOS(.v12),
     ],
     products: [
         .executable(
             name: "swrl",
             targets: ["Runner"]
-        )
+        ),
     ],
     dependencies: [
         .package(
@@ -34,7 +34,7 @@ let package = Package(
         .package(
             url: "https://github.com/SimplyDanny/SwiftLintPlugins.git",
             .upToNextMajor(from: "0.58.2")
-        )
+        ),
     ],
     targets: [
         .executableTarget(
@@ -44,7 +44,7 @@ let package = Package(
                 .target(name: "SyntaxAnalysis"),
                 .target(name: "SymbolsResolver"),
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-                .product(name: "Rainbow", package: "Rainbow")
+                .product(name: "Rainbow", package: "Rainbow"),
             ]
         ),
         .target(
@@ -52,20 +52,20 @@ let package = Package(
             dependencies: [
                 .target(name: "Common"),
                 .product(name: "SwiftParser", package: "swift-syntax"),
-                .product(name: "SwiftSyntax", package: "swift-syntax")
+                .product(name: "SwiftSyntax", package: "swift-syntax"),
             ]
         ),
         .target(
             name: "SymbolsResolver",
             dependencies: [
                 .target(name: "Common"),
-                .product(name: "IndexStoreDB", package: "indexstore-db")
+                .product(name: "IndexStoreDB", package: "indexstore-db"),
             ]
         ),
         .target(name: "Common"),
         .testTarget(
             name: "SyntaxAnalysisTests",
             dependencies: [.target(name: "SyntaxAnalysis")]
-        )
+        ),
     ]
 )

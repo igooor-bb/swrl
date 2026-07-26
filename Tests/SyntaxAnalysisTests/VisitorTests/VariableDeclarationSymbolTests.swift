@@ -1,20 +1,11 @@
-//
-//  VariableDeclarationSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 17.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Variable and Constant Declarations")
 struct VariableDeclarationSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct VariableDeclarationSymbolTests {
         "A let declaration with a simple type.",
         .tags(.symbolKind.usage)
     )
-    func testLetWithSingleType() {
+    func letWithSingleType() {
         let sut = visitor()
         let node = node("let x: UserID")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -51,7 +42,7 @@ struct VariableDeclarationSymbolTests {
         "A var declaration with a simple type.",
         .tags(.symbolKind.usage)
     )
-    func testVarWithSingleType() {
+    func varWithSingleType() {
         let sut = visitor()
         let node = node("var y: Int")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -71,7 +62,7 @@ struct VariableDeclarationSymbolTests {
         "A let declaration with an optional type.",
         .tags(.symbolKind.usage)
     )
-    func testLetWithOptionalType() {
+    func letWithOptionalType() {
         let sut = visitor()
         let node = node("let optional: CustomType?")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -91,7 +82,7 @@ struct VariableDeclarationSymbolTests {
         "A var declaration with an optional type.",
         .tags(.symbolKind.usage)
     )
-    func testVarWithOptionalType() {
+    func varWithOptionalType() {
         let sut = visitor()
         let node = node("var item: CustomType?")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -111,7 +102,7 @@ struct VariableDeclarationSymbolTests {
         "A let declaration with an implicitly unwrapped optional.",
         .tags(.symbolKind.usage)
     )
-    func testLetWithImplicitlyUnwrappedOptional() {
+    func letWithImplicitlyUnwrappedOptional() {
         let sut = visitor()
         let node = node("let label: CustomType!")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -131,7 +122,7 @@ struct VariableDeclarationSymbolTests {
         "An array type in a let declaration.",
         .tags(.symbolKind.usage)
     )
-    func testLetWithArrayType() {
+    func letWithArrayType() {
         let sut = visitor()
         let node = node("let items: [Product]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -151,7 +142,7 @@ struct VariableDeclarationSymbolTests {
         "An array type in a var declaration.",
         .tags(.symbolKind.usage)
     )
-    func testVarWithArrayType() {
+    func varWithArrayType() {
         let sut = visitor()
         let node = node("var results: [Result]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -171,7 +162,7 @@ struct VariableDeclarationSymbolTests {
         "A dictionary type in a let declaration.",
         .tags(.symbolKind.usage)
     )
-    func testLetWithDictionaryType() {
+    func letWithDictionaryType() {
         let sut = visitor()
         let node = node("let dict: [Key: Value]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -199,7 +190,7 @@ struct VariableDeclarationSymbolTests {
         "A dictionary type in a var declaration.",
         .tags(.symbolKind.usage)
     )
-    func testVarWithDictionaryType() {
+    func varWithDictionaryType() {
         let sut = visitor()
         let node = node("var lookup: [ID: Name]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -227,7 +218,7 @@ struct VariableDeclarationSymbolTests {
         "A tuple type in a let declaration.",
         .tags(.symbolKind.usage)
     )
-    func testLetWithTupleOfTypes() {
+    func letWithTupleOfTypes() {
         let sut = visitor()
         let node = node("let config: (Bool, Settings)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -255,7 +246,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with an existential type reference.",
         .tags(.symbolKind.usage)
     )
-    func testVariableWithExistentialType() {
+    func variableWithExistentialType() {
         let sut = visitor()
         let node = node("let service: any Service")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -275,7 +266,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with a specified generic type.",
         .tags(.symbolKind.usage)
     )
-    func testVariableWithGenericType() {
+    func variableWithGenericType() {
         let sut = visitor()
         let node = node("let ids: Set<String>")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -303,7 +294,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with a complex specified generic type.",
         .tags(.symbolKind.usage)
     )
-    func testVariableWithComplexGenericType() {
+    func variableWithComplexGenericType() {
         let sut = visitor()
         let node = node("let outcome: Result<String, Error>")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -339,7 +330,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with a member type.",
         .tags(.symbolKind.usage, .syntaxFeature.memberName)
     )
-    func testVariableWithMemberType() {
+    func variableWithMemberType() {
         let sut = visitor()
         let node = node("let user: User.Profile")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -359,7 +350,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with an array of member types.",
         .tags(.symbolKind.usage)
     )
-    func testVariableWithArrayOfMemberTypes() {
+    func variableWithArrayOfMemberTypes() {
         let sut = visitor()
         let node = node("let users: [User.Profile]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -379,7 +370,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with a dictionary of member types.",
         .tags(.symbolKind.usage, .syntaxFeature.memberName)
     )
-    func testVariableWithDictionaryOfMemberTypes() {
+    func variableWithDictionaryOfMemberTypes() {
         let sut = visitor()
         let node = node("let userDict: [String: User.Profile]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -407,7 +398,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with a closure type.",
         .tags(.symbolKind.usage)
     )
-    func testVariableWithClosureType() {
+    func variableWithClosureType() {
         let sut = visitor()
         let node = node("let completion: (Result<String, Error>) -> Void")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -451,7 +442,7 @@ struct VariableDeclarationSymbolTests {
         "Variable with a closure with member type.",
         .tags(.symbolKind.usage, .syntaxFeature.memberName)
     )
-    func testVariableWithClosureWithMemberType() {
+    func variableWithClosureWithMemberType() {
         let sut = visitor()
         let node = node("let handler: (User.Profile) -> Void")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -479,7 +470,7 @@ struct VariableDeclarationSymbolTests {
         "Variable initialized with a custom type.",
         .tags(.symbolKind.usage)
     )
-    func testVariableInitializationWithCustomType() {
+    func variableInitializationWithCustomType() {
         let sut = visitor()
         let node = node("let user = User(name: \"John\")")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -499,7 +490,7 @@ struct VariableDeclarationSymbolTests {
         "Variable initialized with an array of custom types.",
         .tags(.symbolKind.usage)
     )
-    func testVariableInitializationWithArrayOfCustomTypes() {
+    func variableInitializationWithArrayOfCustomTypes() {
         let sut = visitor()
         let node = node("let users = [User(name: \"John\"), User(name: \"Jane\")]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -527,7 +518,7 @@ struct VariableDeclarationSymbolTests {
         "Variable initialized with custom type with custom type in parameters.",
         .tags(.symbolKind.usage)
     )
-    func testVariableInitializationWithCustomTypeWithCustomTypeInParameters() {
+    func variableInitializationWithCustomTypeWithCustomTypeInParameters() {
         let sut = visitor()
         let node = node("let user = User(profile: Profile(name: \"John\"))")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -555,7 +546,7 @@ struct VariableDeclarationSymbolTests {
         "Variable initialized with an existential type.",
         .tags(.symbolKind.usage, .syntaxFeature.existential)
     )
-    func testVariableInitializationWithExistentialType() {
+    func variableInitializationWithExistentialType() {
         let sut = visitor()
         let node = node("let service: any Service = MyService()")
         let result = sut.parseSymbols(node: node, fileName: "")

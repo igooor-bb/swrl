@@ -1,20 +1,11 @@
-//
-//  GenericTypeExpressionSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 20.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Generic Type Expressions")
 struct GenericTypeExpressionSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic used in variable declaration.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericInVariable() {
+    func genericInVariable() {
         let sut = visitor()
         let node = node("let cache: Box<Int>")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -58,7 +49,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic in variable declaration with specified type.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericInVariableWithSpecifiedType() {
+    func genericInVariableWithSpecifiedType() {
         let sut = visitor()
         let node = node("let cache = Box<Int>()")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -85,7 +76,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic in function parameter.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericInFunctionParameter() {
+    func genericInFunctionParameter() {
         let sut = visitor()
         let node = node("func process(data: Array<String>) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -112,7 +103,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic as function return type.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericAsReturnType() {
+    func genericAsReturnType() {
         let sut = visitor()
         let node = node("func result() -> Result<Data, Error> {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -146,7 +137,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic in initializer.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericInInitializer() {
+    func genericInInitializer() {
         let sut = visitor()
         let node = node("init(service: Service<Client>) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -173,7 +164,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic in throwing type.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericInTypedThrow() {
+    func genericInTypedThrow() {
         let sut = visitor()
         let node = node("func load() throws(NetworkError<Code>) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -200,7 +191,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic in typealias.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericInTypealias() {
+    func genericInTypealias() {
         let sut = visitor()
         let node = node("typealias Handler = (Result<Value, Error>) -> Void")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -248,7 +239,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic with qualified member type.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.memberName)
     )
-    func testGenericWithNestedQualifiedType() {
+    func genericWithNestedQualifiedType() {
         let sut = visitor()
         let node = node("let list: Array<Container.Payload>")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -275,7 +266,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic where argument is a local generic type parameter.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testGenericWithLocalTypeArgument() {
+    func genericWithLocalTypeArgument() {
         let sut = visitor()
         let node = node("func process<T>(input: Array<T>) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -295,7 +286,7 @@ struct GenericTypeExpressionSymbolTests {
         "Generic where local generic type is used inside another generic.",
         .tags(.symbolKind.usage, .syntaxFeature.generic)
     )
-    func testNestedGenericWithLocalGenericArgument() {
+    func nestedGenericWithLocalGenericArgument() {
         let sut = visitor()
         let node = node("func wrap<T>(value: Optional<Array<T>>) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -322,7 +313,7 @@ struct GenericTypeExpressionSymbolTests {
         "Enum case with a generic payload.",
         .tags(.symbolKind.definition, .symbolKind.usage, .syntaxFeature.generic)
     )
-    func testEnumWithGenericAssociatedType() {
+    func enumWithGenericAssociatedType() {
         let sut = visitor()
         let node = node("""
         enum State {

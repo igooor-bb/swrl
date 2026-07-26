@@ -1,10 +1,3 @@
-//
-//  Logger.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 23.03.2025.
-//
-
 import Foundation
 import Rainbow
 
@@ -13,7 +6,6 @@ protocol LoggerPrintable {
 }
 
 struct Logger: Sendable {
-
     typealias Block<T> = () throws -> T
 
     // MARK: Properties
@@ -62,7 +54,7 @@ struct Logger: Sendable {
     }
 
     func bulletPoint(title: String? = nil, message: String = "") {
-        if let title = title {
+        if let title {
             log(" • \(title): ".bold + message)
         } else {
             log(" • \(message)")
@@ -72,6 +64,7 @@ struct Logger: Sendable {
     func list(_ items: [String]) {
         items.sorted().forEach { log("   - \($0)") }
     }
+
     func list(_ items: Set<String>) {
         list(Array(items))
     }

@@ -1,10 +1,3 @@
-//
-//  SyntaxSymbolOccurrence.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 08.04.2025.
-//
-
 import Foundation
 
 public struct SyntaxSymbolOccurrence: Hashable, Sendable {
@@ -36,8 +29,8 @@ public enum SymbolDefinitionKind: String, Hashable, Sendable {
     case `struct`
     case `enum`
     case `typealias`
-    case `macro`
-    case `associatedType`
+    case macro
+    case associatedType
     case unknown
 }
 

@@ -1,17 +1,9 @@
-//
-//  CommandLineResultDumper.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 08.04.2025.
-//
-
 import Common
 import Foundation
 import SymbolsResolver
 import SyntaxAnalysis
 
 struct OutputModel: Encodable {
-
     struct Declaration: Encodable {
         let name: String
         let type: String
@@ -40,7 +32,7 @@ final class CommandLineResultDumper {
         try writeJSON(jsonData, to: file.url)
     }
 
-    private func encodeToJSON<T: Encodable>(_ data: T) throws -> Data {
+    private func encodeToJSON(_ data: some Encodable) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys]
         return try encoder.encode(data)
@@ -102,9 +94,10 @@ private extension SymbolOccurrenceKind {
     var definitionType: SymbolDefinitionKind? {
         switch self {
         case .usage:
-            return nil
+            nil
+
         case let .definition(type):
-            return type
+            type
         }
     }
 }
@@ -114,10 +107,13 @@ private extension ResolvedSymbolOrigin {
         switch self {
         case let .externalModule(name):
             ("external", name)
+
         case .internalToModule:
             ("this", currentModuleName)
+
         case .system:
             ("system", nil)
+
         case .unknown:
             ("unknown", nil)
         }

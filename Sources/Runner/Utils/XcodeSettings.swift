@@ -1,10 +1,3 @@
-//
-//  XcodeSettings.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 07.04.2025.
-//
-
 import Foundation
 import SymbolsResolver
 
@@ -28,7 +21,6 @@ enum XcodeSettingsError: Error, CustomStringConvertible {
 }
 
 final class XcodeSettings: XcodeSettingsProviding {
-
     private enum Constants {
         static let xcodeDefaultsSuiteName = "com.apple.dt.Xcode.plist"
         static let customDerivedDataLocationKey = "IDECustomDerivedDataLocation"
@@ -78,12 +70,11 @@ final class XcodeSettings: XcodeSettingsProviding {
 
     func relativeIndexStorePath() throws -> String {
         let version = try xcodeVersion()
-        let path = if version.starts(with: "13") {
+        return if version.starts(with: "13") {
             Constants.legacyIndexStoreRootPath
         } else {
             Constants.indexStoreRootPath
         }
-        return path
     }
 
     func indexStoreLibraryURL() throws -> URL {
@@ -99,7 +90,6 @@ final class XcodeSettings: XcodeSettingsProviding {
 
     private func xcodeVersion() throws -> String {
         let infoPlistURL = activeXcodeURL.appendingPathComponent(Constants.xcodeInfoPlistPath)
-        let version = try shell.run("/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" \(infoPlistURL.path)")
-        return version
+        return try shell.run("/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" \(infoPlistURL.path)")
     }
 }

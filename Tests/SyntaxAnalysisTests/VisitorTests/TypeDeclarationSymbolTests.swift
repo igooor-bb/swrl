@@ -1,20 +1,11 @@
-//
-//  TypeDeclarationSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 18.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Type Declarations")
 struct TypeDeclarationSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -36,7 +27,7 @@ struct TypeDeclarationSymbolTests {
         .init(keyword: "class", name: "MyClass", expectedKind: .class),
         .init(keyword: "enum", name: "MyEnum", expectedKind: .enum),
         .init(keyword: "protocol", name: "MyProtocol", expectedKind: .protocol),
-        .init(keyword: "actor", name: "MyActor", expectedKind: .actor)
+        .init(keyword: "actor", name: "MyActor", expectedKind: .actor),
     ]
 
     static let genericKinds = kinds.filter { $0.expectedKind != .protocol }
@@ -48,7 +39,7 @@ struct TypeDeclarationSymbolTests {
         .tags(.symbolKind.definition),
         arguments: kinds
     )
-    func testSimpleDeclaration(kind: DeclarationKindTest) {
+    func simpleDeclaration(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -69,7 +60,7 @@ struct TypeDeclarationSymbolTests {
         .tags(.symbolKind.definition),
         arguments: kinds
     )
-    func testSingleProtocolConformance(kind: DeclarationKindTest) {
+    func singleProtocolConformance(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name): Codable {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -99,7 +90,7 @@ struct TypeDeclarationSymbolTests {
         .tags(.symbolKind.definition),
         arguments: kinds
     )
-    func testMultipleProtocolConformances(kind: DeclarationKindTest) {
+    func multipleProtocolConformances(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name): Hashable, Identifiable {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -137,7 +128,7 @@ struct TypeDeclarationSymbolTests {
         .tags(.symbolKind.definition, .syntaxFeature.generic, .syntaxFeature.constraint),
         arguments: genericKinds
     )
-    func testGenericConstraint(kind: DeclarationKindTest) {
+    func genericConstraint(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T: Codable> {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -167,7 +158,7 @@ struct TypeDeclarationSymbolTests {
         .tags(.symbolKind.definition, .syntaxFeature.generic, .syntaxFeature.constraint),
         arguments: genericKinds
     )
-    func testMultipleGenericConstraints(kind: DeclarationKindTest) {
+    func multipleGenericConstraints(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T: Codable, U: Hashable> {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -205,7 +196,7 @@ struct TypeDeclarationSymbolTests {
         .tags(.symbolKind.definition, .syntaxFeature.generic, .syntaxFeature.compoundConstraint),
         arguments: genericKinds
     )
-    func testCompoundGenericConstraint(kind: DeclarationKindTest) {
+    func compoundGenericConstraint(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T: Codable & Sendable> {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -283,7 +274,7 @@ struct TypeDeclarationSymbolTests {
         ),
         arguments: genericKinds
     )
-    func testCompoundWhereClause(kind: DeclarationKindTest) {
+    func compoundWhereClause(kind: DeclarationKindTest) {
         let sut = visitor()
         let node = node("\(kind.keyword) \(kind.name)<T> where T: Equatable & Identifiable {}")
         let result = sut.parseSymbols(node: node, fileName: "")

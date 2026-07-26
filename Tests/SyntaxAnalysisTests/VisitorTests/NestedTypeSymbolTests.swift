@@ -1,20 +1,11 @@
-//
-//  NestedTypeSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 18.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Nested Types and Usage")
 struct NestedTypeSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct NestedTypeSymbolTests {
         "Nested struct inside a struct.",
         .tags(.symbolKind.definition)
     )
-    func testNestedStructDefinition() {
+    func nestedStructDefinition() {
         let sut = visitor()
         let node = node("""
         struct Outer {
@@ -63,7 +54,7 @@ struct NestedTypeSymbolTests {
         "Usage of nested type.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testUsageOfNestedType() {
+    func usageOfNestedType() {
         let sut = visitor()
         let node = node("""
         struct Container {
@@ -104,7 +95,7 @@ struct NestedTypeSymbolTests {
         "Nested type usage inside nested method.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testNestedTypeUsedInMethodScope() {
+    func nestedTypeUsedInMethodScope() {
         let sut = visitor()
         let node = node("""
         struct Box {
@@ -156,7 +147,7 @@ struct NestedTypeSymbolTests {
         "Deeply nested type declaration.",
         .tags(.symbolKind.definition)
     )
-    func testDeeplyNestedTypeDefinition() {
+    func deeplyNestedTypeDefinition() {
         let sut = visitor()
         let node = node("""
         struct A {
@@ -198,7 +189,7 @@ struct NestedTypeSymbolTests {
         "Usage of nested type inside an enum.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testNestedUsageInsideEnum() {
+    func nestedUsageInsideEnum() {
         let sut = visitor()
         let node = node("""
         enum Kind {
@@ -239,7 +230,7 @@ struct NestedTypeSymbolTests {
         "Usage of nested type across sibling scopes.",
         .tags(.symbolKind.definition, .symbolKind.usage, .syntaxFeature.memberName)
     )
-    func testCrossScopeUsage() {
+    func crossScopeUsage() {
         let sut = visitor()
         let node = node("""
         struct Container {

@@ -5,7 +5,6 @@ import SyntaxAnalysis
 
 @main
 struct CommandLineRunner: AsyncParsableCommand {
-
     // MARK: Constants
 
     private static let defaultOutputFileName = "output.json"

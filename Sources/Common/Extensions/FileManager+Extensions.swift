@@ -1,10 +1,3 @@
-//
-//  FileManager+Extensions.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 22.03.2025.
-//
-
 import Foundation
 
 public extension FileManager {

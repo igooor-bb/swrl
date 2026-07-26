@@ -1,10 +1,3 @@
-//
-//  SwiftSymbolsAnalyzerOptions.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 04.04.2025.
-//
-
 import Foundation
 
 public struct SwiftSymbolsAnalyzerOptions: OptionSet, Sendable {

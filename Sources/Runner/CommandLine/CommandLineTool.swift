@@ -1,16 +1,8 @@
-//
-//  CommandLineTool.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 23.03.2025.
-//
-
 import Foundation
 import SymbolsResolver
 import SyntaxAnalysis
 
 final class CommandLineTool {
-
     private let logger: Logger
     private let project: InputFile
     private let resolver: SymbolsResolver
@@ -27,7 +19,7 @@ final class CommandLineTool {
         self.project = project
     }
 
-    func processInputFile(_ file: InputFile, at index: Int, totalCount: Int) async throws -> FileAnalysisContext {
+    func processInputFile(_ file: InputFile, at _: Int, totalCount _: Int) async throws -> FileAnalysisContext {
         try createSyntaxAnalysisContext(for: file)
             .apply(performSyntaxAnalysis)
             .apply(performSymbolsResolution)
@@ -35,14 +27,13 @@ final class CommandLineTool {
 
     // MARK: Processing
 
-    // Step 1
+    /// Step 1
     private func createSyntaxAnalysisContext(for file: InputFile) throws -> FileAnalysisContext {
         let moduleName = try resolver.determineFileModule(fileURL: file.url)
-        let context = FileAnalysisContext(file: file, moduleName: moduleName)
-        return context
+        return FileAnalysisContext(file: file, moduleName: moduleName)
     }
 
-    // Step 2
+    /// Step 2
     private func performSyntaxAnalysis(on context: FileAnalysisContext) throws -> FileAnalysisContext {
         let symbolsAnalyzer = SyntaxSymbolsAnalyzer()
         let result = try symbolsAnalyzer.analyzeFile(at: context.file.url)
@@ -55,7 +46,7 @@ final class CommandLineTool {
         return updated
     }
 
-    // Step 3
+    /// Step 3
     private func performSymbolsResolution(on context: FileAnalysisContext) throws -> FileAnalysisContext {
         let resolvedSymbols = resolver.resolveSymbols(
             Array(context.dependencies),

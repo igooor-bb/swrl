@@ -1,20 +1,11 @@
-//
-//  ExpressionTypeUsageSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 20.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Type Usages in Expressions")
 struct ExpressionTypeUsageSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct ExpressionTypeUsageSymbolTests {
         "Type used in initialization expression.",
         .tags(.symbolKind.usage, .semantics.expression)
     )
-    func testTypeUsedInInitCall() {
+    func typeUsedInInitCall() {
         let sut = visitor()
         let node = node("let user = User()")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -51,7 +42,7 @@ struct ExpressionTypeUsageSymbolTests {
         "Type used in cast expression.",
         .tags(.symbolKind.usage, .semantics.expression)
     )
-    func testTypeUsedInCast() {
+    func typeUsedInCast() {
         let sut = visitor()
         let node = node("""
         let obj = Object()
@@ -81,7 +72,7 @@ struct ExpressionTypeUsageSymbolTests {
         "Type used in generic init expression.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .semantics.expression)
     )
-    func testTypeUsedInGenericInit() {
+    func typeUsedInGenericInit() {
         let sut = visitor()
         let node = node("let result = Result<String, Error>.success(\"OK\")")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -117,7 +108,7 @@ struct ExpressionTypeUsageSymbolTests {
         "Type used in throw expression.",
         .tags(.symbolKind.usage, .semantics.expression)
     )
-    func testTypeUsedInThrowExpression() {
+    func typeUsedInThrowExpression() {
         let sut = visitor()
         let node = node("""
         func fail() throws {
@@ -141,7 +132,7 @@ struct ExpressionTypeUsageSymbolTests {
         "Type used in return expression.",
         .tags(.symbolKind.usage, .semantics.expression)
     )
-    func testTypeUsedInReturn() {
+    func typeUsedInReturn() {
         let sut = visitor()
         let node = node("""
         func make() -> User {
@@ -172,7 +163,7 @@ struct ExpressionTypeUsageSymbolTests {
         "Type used in key path expression.",
         .tags(.symbolKind.usage, .semantics.expression)
     )
-    func testTypeUsedInKeyPath() {
+    func typeUsedInKeyPath() {
         let sut = visitor()
         let node = node("let key = \\User.name")
         let result = sut.parseSymbols(node: node, fileName: "")

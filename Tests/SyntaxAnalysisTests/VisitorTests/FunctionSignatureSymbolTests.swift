@@ -1,20 +1,11 @@
-//
-//  FunctionSignatureSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 17.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Function and Method Signatures")
 struct FunctionSignatureSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a return type.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithReturnType() {
+    func functionWithReturnType() {
         let sut = visitor()
         let node = node("func fetch() -> Response")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -51,7 +42,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a parameter.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithSingleParameter() {
+    func functionWithSingleParameter() {
         let sut = visitor()
         let node = node("func process(input: Data)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -71,7 +62,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a variadic parameter.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithVariadicParameter() {
+    func functionWithVariadicParameter() {
         let sut = visitor()
         let node = node("func sum(values: Int...)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -91,7 +82,7 @@ struct FunctionSignatureSymbolTests {
         "Function with multiple parameters.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithMultipleParameters() {
+    func functionWithMultipleParameters() {
         let sut = visitor()
         let node = node("func merge(lhs: Version, rhs: Version)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -119,7 +110,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a tuple parameter.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithTupleParameter() {
+    func functionWithTupleParameter() {
         let sut = visitor()
         let node = node("func setPoint(position: (Float, Float))")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -147,7 +138,7 @@ struct FunctionSignatureSymbolTests {
         "Function with an array parameter.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithArrayParameter() {
+    func functionWithArrayParameter() {
         let sut = visitor()
         let node = node("func render(images: [Image])")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -167,7 +158,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a dictionary parameter.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithDictionaryParameter() {
+    func functionWithDictionaryParameter() {
         let sut = visitor()
         let node = node("func map(values: [Key: Value])")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -195,7 +186,7 @@ struct FunctionSignatureSymbolTests {
         "Function with single generic parameter and constraint.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
     )
-    func testFunctionWithGenericParameterConstraint() {
+    func functionWithGenericParameterConstraint() {
         let sut = visitor()
         let node = node("func decode<T: Decodable>(value: T)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -215,7 +206,7 @@ struct FunctionSignatureSymbolTests {
         "Function with multiple generic parameters and constraints.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
     )
-    func testFunctionWithMultipleGenericParameterConstraint() {
+    func functionWithMultipleGenericParameterConstraint() {
         let sut = visitor()
         let node = node("func decode<T: Decodable, Q: Encodable>(value: T, into: inout Q)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -243,7 +234,7 @@ struct FunctionSignatureSymbolTests {
         "Function with compound generic parameter constraints.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.compoundConstraint)
     )
-    func testFunctionWithMultipleParameterGenericConstraints() {
+    func functionWithMultipleParameterGenericConstraints() {
         let sut = visitor()
         let node = node("func process<T: Codable & Equatable>(value: T)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -271,7 +262,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a closure parameter.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithClosureParameter() {
+    func functionWithClosureParameter() {
         let sut = visitor()
         let node = node("func run(completion: () -> Void)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -291,7 +282,7 @@ struct FunctionSignatureSymbolTests {
         "Function returning a closure.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionReturningClosure() {
+    func functionReturningClosure() {
         let sut = visitor()
         let node = node("func makeHandler() -> () -> Output")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -311,7 +302,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a closure parameter that accepts a type.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithClosureParameterWithInput() {
+    func functionWithClosureParameterWithInput() {
         let sut = visitor()
         let node = node("func handle(callback: (Error) -> Void)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -344,7 +335,7 @@ struct FunctionSignatureSymbolTests {
             .syntaxFeature.whereClause
         )
     )
-    func testFunctionWithWhereClause() {
+    func functionWithWhereClause() {
         let sut = visitor()
         let node = node("func sync<T>(input: T) where T: Codable")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -369,7 +360,7 @@ struct FunctionSignatureSymbolTests {
             .syntaxFeature.whereClause
         )
     )
-    func testFunctionWithComplexWhereClause() {
+    func functionWithComplexWhereClause() {
         let sut = visitor()
         let node = node("func sync<T, Q>(input: T, queue: Q) where T: Codable, Q: Sendable")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -402,7 +393,7 @@ struct FunctionSignatureSymbolTests {
             .syntaxFeature.whereClause
         )
     )
-    func testFunctionWithCompoundWhereClause() {
+    func functionWithCompoundWhereClause() {
         let sut = visitor()
         let node = node("func sync<T>(input: T) where T: Codable & Hashable")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -430,7 +421,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a return type using opaque result type.",
         .tags(.symbolKind.usage, .syntaxFeature.opaque)
     )
-    func testFunctionWithOpaqueReturnType() {
+    func functionWithOpaqueReturnType() {
         let sut = visitor()
         let node = node("func render() -> some View")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -450,7 +441,7 @@ struct FunctionSignatureSymbolTests {
         "Function with an existential type parameter.",
         .tags(.symbolKind.usage, .syntaxFeature.existential)
     )
-    func testFunctionWithExistentialParameter() {
+    func functionWithExistentialParameter() {
         let sut = visitor()
         let node = node("func resolve(service: any Service)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -470,7 +461,7 @@ struct FunctionSignatureSymbolTests {
         "Function with a typed throwing error.",
         .tags(.symbolKind.usage)
     )
-    func testFunctionWithTypedThrowingError() {
+    func functionWithTypedThrowingError() {
         let sut = visitor()
         let node = node("func risky() throws(MyError) -> Void")
         let result = sut.parseSymbols(node: node, fileName: "")

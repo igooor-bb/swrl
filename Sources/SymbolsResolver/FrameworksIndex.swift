@@ -1,10 +1,3 @@
-//
-//  FrameworksIndex.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 28.03.2025.
-//
-
 import Common
 import Foundation
 
@@ -15,7 +8,6 @@ public protocol FrameworkDefinitionsAnalyzer {
 }
 
 final class FrameworksIndex {
-
     // MARK: Nested Types
 
     struct FrameworkSymbolLookup {
@@ -35,7 +27,7 @@ final class FrameworksIndex {
         storeURL: URL,
         analyzer: FrameworkDefinitionsAnalyzer
     ) {
-        self.indexStoreURL = storeURL
+        indexStoreURL = storeURL
         self.analyzer = analyzer
     }
 
@@ -62,19 +54,19 @@ final class FrameworksIndex {
             // Analyze the interface file using the SwiftSyntax analysis, since the interface conforms to Swift.
             // We consider only definitions.
             let result = analyzer.findDefinitions(at: frameworkInterfaceFileURL)
-            result.forEach {
-                frameworkNameBySymbolIdentifier[$0.symbolName] = frameworkName
-                resolvedSymbolsByIdentifier[$0.symbolName] = $0
+            for item in result {
+                frameworkNameBySymbolIdentifier[item.symbolName] = frameworkName
+                resolvedSymbolsByIdentifier[item.symbolName] = item
             }
         }
 
         var resolvedSymbols: [SyntaxSymbolOccurrence: FrameworkSymbolLookup] = [:]
-        symbolsToResolve.forEach { symbol in
+        for symbol in symbolsToResolve {
             guard
                 let frameworkName = frameworkNameBySymbolIdentifier[symbol.symbolName],
                 let foundSymbol = resolvedSymbolsByIdentifier[symbol.symbolName]
             else {
-                return
+                continue
             }
 
             // TODO: Consider several occurrences.
@@ -116,7 +108,7 @@ final class FrameworksIndex {
             at: directory,
             includingPropertiesForKeys: [.isDirectoryKey],
             options: [.skipsHiddenFiles],
-            errorHandler: { (_, _) -> Bool in
+            errorHandler: { _, _ -> Bool in
                 // Continue enumeration even if an error occurs.
                 return true
             }
@@ -127,7 +119,7 @@ final class FrameworksIndex {
         for case let fileURL as URL in enumerator {
             do {
                 let resourceValues = try fileURL.resourceValues(forKeys: [.isDirectoryKey])
-                if resourceValues.isDirectory == true && fileURL.pathExtension == "framework" {
+                if resourceValues.isDirectory == true, fileURL.pathExtension == "framework" {
                     let frameworkName = fileURL.deletingPathExtension().lastPathComponent
                     foundFrameworks[frameworkName] = fileURL
                 }

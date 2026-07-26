@@ -1,10 +1,3 @@
-//
-//  SyntaxSymbolsVisitor.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 21.03.2025.
-//
-
 import Common
 import Foundation
 import SwiftParser
@@ -21,7 +14,6 @@ struct LocalVariableOccurrence: Hashable {
 }
 
 final class SyntaxSymbolsVisitor: SyntaxVisitor {
-
     // MARK: Properties
 
     private var sourceLocationConverter: SourceLocationConverter!
@@ -189,7 +181,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: InitializerDeclSyntax) {
+    override func visitPost(_: InitializerDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
@@ -226,17 +218,17 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: FunctionDeclSyntax) {
+    override func visitPost(_: FunctionDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
 
-    override func visit(_ node: CatchClauseSyntax) -> SyntaxVisitorContinueKind {
+    override func visit(_: CatchClauseSyntax) -> SyntaxVisitorContinueKind {
         isInsideCatchClause = true
         return .visitChildren
     }
 
-    override func visitPost(_ node: CatchClauseSyntax) {
+    override func visitPost(_: CatchClauseSyntax) {
         isInsideCatchClause = false
     }
 
@@ -283,7 +275,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: StructDeclSyntax) {
+    override func visitPost(_: StructDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
@@ -309,7 +301,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: ClassDeclSyntax) {
+    override func visitPost(_: ClassDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
@@ -335,7 +327,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: ActorDeclSyntax) {
+    override func visitPost(_: ActorDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
@@ -371,7 +363,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
-    override func visitPost(_ node: ExtensionDeclSyntax) {
+    override func visitPost(_: ExtensionDeclSyntax) {
         _ = scopeStack.popLast()
     }
 
@@ -386,7 +378,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .visitChildren
     }
 
-    override func visitPost(_ node: EnumDeclSyntax) {
+    override func visitPost(_: EnumDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
@@ -408,7 +400,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: TypeAliasDeclSyntax) {
+    override func visitPost(_: TypeAliasDeclSyntax) {
         resetGenericParameters()
     }
 
@@ -450,7 +442,7 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
         return .skipChildren
     }
 
-    override func visitPost(_ node: ProtocolDeclSyntax) {
+    override func visitPost(_: ProtocolDeclSyntax) {
         _ = scopeStack.popLast()
         resetGenericParameters()
     }
@@ -522,7 +514,8 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     // Example: Foundation.Date.now or Container.Entry()
     override func visit(_ node: MemberAccessExprSyntax) -> SyntaxVisitorContinueKind {
         if let base = node.base?.as(DeclReferenceExprSyntax.self),
-           imports.contains(base.baseName.text) {
+           imports.contains(base.baseName.text)
+        {
             let fqn = "\(base.baseName.text).\(node.declName.baseName.text)"
             recordOccurrence(
                 name: node.declName.baseName.text,
@@ -570,7 +563,8 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
     override func visit(_ node: AttributeListSyntax) -> SyntaxVisitorContinueKind {
         for attribute in node {
             if let attr = attribute.as(AttributeSyntax.self),
-               let wrapperName = attr.attributeName.as(IdentifierTypeSyntax.self) {
+               let wrapperName = attr.attributeName.as(IdentifierTypeSyntax.self)
+            {
                 let name = wrapperName.name.text
                 if shouldRecordSymbol(name) {
                     recordOccurrence(

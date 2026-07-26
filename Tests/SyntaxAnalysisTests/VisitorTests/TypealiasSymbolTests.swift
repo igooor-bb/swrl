@@ -1,20 +1,11 @@
-//
-//  TypealiasSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 18.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Typealiases")
 struct TypealiasSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct TypealiasSymbolTests {
         "Typealias to a simple type.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasToSimpleType() {
+    func typealiasToSimpleType() {
         let sut = visitor()
         let node = node("typealias ID = String")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -59,7 +50,7 @@ struct TypealiasSymbolTests {
         "Typealias to a complex type.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasToComplexType() {
+    func typealiasToComplexType() {
         let sut = visitor()
         let node = node("typealias StringMap = [String: Value]")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -95,7 +86,7 @@ struct TypealiasSymbolTests {
         "Typealias to a function type.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasToFunctionType() {
+    func typealiasToFunctionType() {
         let sut = visitor()
         let node = node("typealias Completion = (Result) -> Void")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -131,7 +122,7 @@ struct TypealiasSymbolTests {
         "Typealias with generic parameters and constraints.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testGenericTypealiasWithConstraint() {
+    func genericTypealiasWithConstraint() {
         let sut = visitor()
         let node = node("typealias Filter<T: Hashable> = (T) -> Bool")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -167,7 +158,7 @@ struct TypealiasSymbolTests {
         "Typealias with a where clause.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasWithWhereClause() {
+    func typealiasWithWhereClause() {
         let sut = visitor()
         let node = node("typealias Filter<T> = (T) -> Bool where T: Equatable")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -203,7 +194,7 @@ struct TypealiasSymbolTests {
         "Typealias with multiple generic constraints.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasWithMultipleGenericConstraints() {
+    func typealiasWithMultipleGenericConstraints() {
         let sut = visitor()
         let node = node("typealias Transform<T: Decodable, U: Encodable> = (T) -> U")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -239,7 +230,7 @@ struct TypealiasSymbolTests {
         "Typealias with compound generic constraint.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasWithCompoundGenericConstraint() {
+    func typealiasWithCompoundGenericConstraint() {
         let sut = visitor()
         let node = node("typealias Storable<T: Codable & Hashable> = (T) -> Bool")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -283,7 +274,7 @@ struct TypealiasSymbolTests {
         "Typealias with compound constraint in a where clause.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasWithCompoundWhereClause() {
+    func typealiasWithCompoundWhereClause() {
         let sut = visitor()
         let node = node("typealias Filter<T> = (T) -> Bool where T: Codable & Sendable")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -327,7 +318,7 @@ struct TypealiasSymbolTests {
         "Typealias to a protocol composition.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testTypealiasToProtocolComposition() {
+    func typealiasToProtocolComposition() {
         let sut = visitor()
         let node = node("typealias Codable = Encodable & Decodable")
         let result = sut.parseSymbols(node: node, fileName: "")

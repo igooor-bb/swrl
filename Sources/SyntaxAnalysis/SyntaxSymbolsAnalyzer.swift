@@ -1,24 +1,16 @@
-//
-//  SyntaxSymbolsAnalyzer.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 24.03.2025.
-//
-
 import Common
 import Foundation
 import SwiftParser
 import SwiftSyntax
 
 public final class SyntaxSymbolsAnalyzer {
-
     private static let swiftBuiltInTypes: Set<String> = [
-        "Bool", "String", "Int", "Double", "Float", "Any", "AnyObject", "AnyHashable", "Never", "Optional", "Void"
+        "Bool", "String", "Int", "Double", "Float", "Any", "AnyObject", "AnyHashable", "Never", "Optional", "Void",
     ]
 
     // MARK: Properties
 
-    public init () {}
+    public init() {}
 
     // MARK: Analysis
 
@@ -69,7 +61,8 @@ public final class SyntaxSymbolsAnalyzer {
 
             if let fqn = occ.fullyQualifiedName,
                let firstComponent = fqn.components(separatedBy: ".").first,
-               imports.contains(firstComponent) {
+               imports.contains(firstComponent)
+            {
                 if let defs = localDefinitions[occ.symbolName] {
                     // If any local definition's scope chain is a prefix of the usage's,
                     // then the usage is considered local.

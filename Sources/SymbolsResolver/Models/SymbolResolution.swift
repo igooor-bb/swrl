@@ -1,10 +1,3 @@
-//
-//  SymbolResolution.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 07.04.2025.
-//
-
 import Common
 import Foundation
 import struct IndexStoreDB.SymbolOccurrence
@@ -29,14 +22,12 @@ extension SymbolResolution {
         currentModuleName: String
     ) -> SymbolResolution {
         let foundModuleName = occurrence.location.moduleName
-        let origin: ResolvedSymbolOrigin
-
-        if occurrence.location.isSystem {
-            origin = .system
+        let origin: ResolvedSymbolOrigin = if occurrence.location.isSystem {
+            .system
         } else if foundModuleName == currentModuleName {
-            origin = .internalToModule
+            .internalToModule
         } else {
-            origin = .externalModule(foundModuleName)
+            .externalModule(foundModuleName)
         }
 
         return SymbolResolution(
@@ -71,7 +62,7 @@ extension SymbolResolution {
     static func `internal`(
         symbol: SyntaxSymbolOccurrence,
         originKind: SymbolDefinitionKind,
-        currentModuleName: String
+        currentModuleName _: String
     ) -> SymbolResolution {
         SymbolResolution(
             targetSymbol: symbol,

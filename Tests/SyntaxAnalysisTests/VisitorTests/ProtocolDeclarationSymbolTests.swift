@@ -1,20 +1,11 @@
-//
-//  ProtocolDeclarationSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 18.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Protocol Declarations")
 struct ProtocolDeclarationSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct ProtocolDeclarationSymbolTests {
         "Protocol with unbounded associated type.",
         .tags(.symbolKind.definition)
     )
-    func testProtocolWithUnboundedAssociatedType() {
+    func protocolWithUnboundedAssociatedType() {
         let sut = visitor()
         let node = node("""
         protocol Basic {
@@ -63,7 +54,7 @@ struct ProtocolDeclarationSymbolTests {
         "Protocol with associated type with constraint.",
         .tags(.symbolKind.definition, .syntaxFeature.constraint)
     )
-    func testProtocolWithAssociatedTypeConstraint() {
+    func protocolWithAssociatedTypeConstraint() {
         let sut = visitor()
         let node = node("""
         protocol Identifiable {
@@ -103,7 +94,7 @@ struct ProtocolDeclarationSymbolTests {
         "Protocol with associated type with multiple constraints.",
         .tags(.symbolKind.definition, .syntaxFeature.constraint, .syntaxFeature.whereClause)
     )
-    func testProtocolWithAssociatedTypeMultipleConstraints() {
+    func protocolWithAssociatedTypeMultipleConstraints() {
         let sut = visitor()
         let node = node("""
         protocol Serializable {
@@ -151,7 +142,7 @@ struct ProtocolDeclarationSymbolTests {
         "Protocol with associated type with compound constraint.",
         .tags(.symbolKind.definition, .syntaxFeature.compoundConstraint, .syntaxFeature.whereClause)
     )
-    func testProtocolWithAssociatedTypeCompoundConstraint() {
+    func protocolWithAssociatedTypeCompoundConstraint() {
         let sut = visitor()
         let node = node("""
         protocol Cacheable {
@@ -199,7 +190,7 @@ struct ProtocolDeclarationSymbolTests {
         "Protocol with associated type with default value.",
         .tags(.symbolKind.definition, .syntaxFeature.constraint)
     )
-    func testProtocolWithAssociatedTypeDefaultValue() {
+    func protocolWithAssociatedTypeDefaultValue() {
         let sut = visitor()
         let node = node("""
         protocol Defaultable {

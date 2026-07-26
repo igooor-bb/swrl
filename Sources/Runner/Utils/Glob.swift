@@ -1,10 +1,3 @@
-//
-//  Glob.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 08.04.2025.
-//
-
 import Darwin
 import Foundation
 
@@ -23,7 +16,7 @@ private func simpleGlob(pattern: String) -> [String] {
     let flags = GLOB_TILDE | GLOB_BRACE | GLOB_MARK
     if glob(pattern, flags, nil, &globResult) == 0 {
         var matches: [String] = []
-        for i in 0..<globResult.gl_pathc {
+        for i in 0 ..< globResult.gl_pathc {
             if let path = globResult.gl_pathv[i] {
                 matches.append(String(cString: path))
             }
@@ -43,7 +36,7 @@ private func findFilesRecursively(pattern: String) -> [String] {
     let baseURL = URL(fileURLWithPath: basePath)
 
     var remainingPattern = components[1]
-    if !remainingPattern.isEmpty && !remainingPattern.hasPrefix("/") {
+    if !remainingPattern.isEmpty, !remainingPattern.hasPrefix("/") {
         remainingPattern = "/" + remainingPattern
     }
 

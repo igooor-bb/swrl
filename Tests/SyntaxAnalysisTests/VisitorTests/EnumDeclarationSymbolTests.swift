@@ -1,20 +1,11 @@
-//
-//  EnumDeclarationSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 18.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Enum Declarations")
 struct EnumDeclarationSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct EnumDeclarationSymbolTests {
         "Enum case with no associated values.",
         .tags(.symbolKind.definition)
     )
-    func testEnumWithSimpleCase() {
+    func enumWithSimpleCase() {
         let sut = visitor()
         let node = node("""
         enum Status {
@@ -55,7 +46,7 @@ struct EnumDeclarationSymbolTests {
         "Enum case with an associated value.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testEnumWithAssociatedType() {
+    func enumWithAssociatedType() {
         let sut = visitor()
         let node = node("""
         enum Result {
@@ -87,7 +78,7 @@ struct EnumDeclarationSymbolTests {
         "Enum case with a tuple type.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testEnumWithTuplePayload() {
+    func enumWithTuplePayload() {
         let sut = visitor()
         let node = node("""
         enum Values {
@@ -127,7 +118,7 @@ struct EnumDeclarationSymbolTests {
         "Enum case with multiple associated values.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testEnumWithMultipleAssociatedValues() {
+    func enumWithMultipleAssociatedValues() {
         let sut = visitor()
         let node = node("""
         enum UserEvent {
@@ -167,7 +158,7 @@ struct EnumDeclarationSymbolTests {
         "Indirect enum with self-referencing associated values.",
         .tags(.symbolKind.definition, .symbolKind.usage)
     )
-    func testIndirectEnumWithSelfRecursiveCase() {
+    func indirectEnumWithSelfRecursiveCase() {
         let sut = visitor()
         let node = node("""
         indirect enum Tree {

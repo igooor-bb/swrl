@@ -1,20 +1,11 @@
-//
-//  ImportSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 18.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Imports")
 struct ImportSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct ImportSymbolTests {
         "Basic module import.",
         .tags(.symbolKind.import)
     )
-    func testSimpleImport() {
+    func simpleImport() {
         let sut = visitor()
         let node = node("import Foundation")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -44,7 +35,7 @@ struct ImportSymbolTests {
         "Multiple module imports.",
         .tags(.symbolKind.import)
     )
-    func testMultipleImports() {
+    func multipleImports() {
         let sut = visitor()
         let node = node("""
         import Foundation
@@ -57,7 +48,7 @@ struct ImportSymbolTests {
     }
 
     @Test("Qualified module import.")
-    func testQualifiedImport() {
+    func qualifiedImport() {
         let sut = visitor()
         let node = node("import struct Foundation.URL")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -70,7 +61,7 @@ struct ImportSymbolTests {
         "Imports with declarations.",
         .tags(.symbolKind.import, .symbolKind.definition)
     )
-    func testImportsWithDeclarations() {
+    func importsWithDeclarations() {
         let sut = visitor()
         let node = node("""
         import Foundation

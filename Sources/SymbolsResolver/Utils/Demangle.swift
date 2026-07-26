@@ -1,10 +1,3 @@
-//
-//  Demangle.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 23.03.2025.
-//
-
 import Foundation
 
 @_silgen_name("swift_demangle")

@@ -1,10 +1,3 @@
-//
-//  SymbolDefinitionKind+Extensions.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 07.04.2025.
-//
-
 import Common
 import Foundation
 import IndexStoreDB

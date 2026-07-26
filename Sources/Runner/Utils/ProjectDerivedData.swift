@@ -1,10 +1,3 @@
-//
-//  ProjectDerivedData.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 21.03.2025.
-//
-
 import Darwin
 import Foundation
 import SymbolsResolver
@@ -37,7 +30,6 @@ protocol ProjectDerivedDataProviding {
 }
 
 final class ProjectDerivedDataFinder: ProjectDerivedDataProviding {
-
     private enum Constants {
         static let derivedDataInfoPlistName = "info.plist"
         static let derivedDataWorkspacePathKey = "WorkspacePath"

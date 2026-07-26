@@ -1,20 +1,11 @@
-//
-//  InitializerSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 18.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Initializers")
 struct InitializerSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct InitializerSymbolTests {
         "Initializer with a single parameter.",
         .tags(.symbolKind.usage)
     )
-    func testInitializerWithSingleParameter() {
+    func initializerWithSingleParameter() {
         let sut = visitor()
         let node = node("init(name: String) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -51,7 +42,7 @@ struct InitializerSymbolTests {
         "Initializer with multiple parameters.",
         .tags(.symbolKind.usage)
     )
-    func testInitializerWithMultipleParameters() {
+    func initializerWithMultipleParameters() {
         let sut = visitor()
         let node = node("init(id: UUID, count: Int) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -79,7 +70,7 @@ struct InitializerSymbolTests {
         "Throwing initializer with a parameter.",
         .tags(.symbolKind.usage)
     )
-    func testThrowingInitializer() {
+    func throwingInitializer() {
         let sut = visitor()
         let node = node("init(file: URL) throws(CustomError) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -107,7 +98,7 @@ struct InitializerSymbolTests {
         "Initializer with a closure parameter.",
         .tags(.symbolKind.usage)
     )
-    func testInitializerWithClosureParameter() {
+    func initializerWithClosureParameter() {
         let sut = visitor()
         let node = node("init(completion: () -> Void)")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -127,7 +118,7 @@ struct InitializerSymbolTests {
         "Initializer with array and dictionary parameters.",
         .tags(.symbolKind.usage)
     )
-    func testInitializerWithArrayAndDictionaryTypes() {
+    func initializerWithArrayAndDictionaryTypes() {
         let sut = visitor()
         let node = node("init(list: [Item], mapping: [Key: Value]) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -163,7 +154,7 @@ struct InitializerSymbolTests {
         "Initializer with a generic type parameter like Result<String, Error>.",
         .tags(.symbolKind.usage)
     )
-    func testInitializerWithGenericTypeParameter() {
+    func initializerWithGenericTypeParameter() {
         let sut = visitor()
         let node = node("init(result: Result<String, Error>) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -199,7 +190,7 @@ struct InitializerSymbolTests {
         "Convenience initializer with a generic parameter.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
     )
-    func testConvenienceInitializerWithGenericConstraint() {
+    func convenienceInitializerWithGenericConstraint() {
         let sut = visitor()
         let node = node("convenience init<T: Codable>(from: T) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -219,7 +210,7 @@ struct InitializerSymbolTests {
         "Initializer with multiple generic parameters and constraints.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.constraint)
     )
-    func testInitializerWithMultipleGenericConstraints() {
+    func initializerWithMultipleGenericConstraints() {
         let sut = visitor()
         let node = node("init<T: Codable, U: Equatable>(first: T, second: U) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -247,7 +238,7 @@ struct InitializerSymbolTests {
         "Initializer with a compound generic constraint.",
         .tags(.symbolKind.usage, .syntaxFeature.generic, .syntaxFeature.compoundConstraint)
     )
-    func testInitializerWithCompoundGenericConstraint() {
+    func initializerWithCompoundGenericConstraint() {
         let sut = visitor()
         let node = node("init<T: Hashable & Codable>(input: T) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -275,7 +266,7 @@ struct InitializerSymbolTests {
         "Initializer with a tuple parameter.",
         .tags(.symbolKind.usage)
     )
-    func testInitializerWithTupleParameter() {
+    func initializerWithTupleParameter() {
         let sut = visitor()
         let node = node("init(origin: (Float, Float)) {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -308,7 +299,7 @@ struct InitializerSymbolTests {
             .syntaxFeature.whereClause
         )
     )
-    func testInitializerWithWhereClause() {
+    func initializerWithWhereClause() {
         let sut = visitor()
         let node = node("init<T>(value: T) where T: Hashable {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -333,7 +324,7 @@ struct InitializerSymbolTests {
             .syntaxFeature.whereClause
         )
     )
-    func testInitializerWithComplexWhereClause() {
+    func initializerWithComplexWhereClause() {
         let sut = visitor()
         let node = node("init<T, U>(first: T, second: U) where T: Codable, U: Hashable {}")
         let result = sut.parseSymbols(node: node, fileName: "")
@@ -366,7 +357,7 @@ struct InitializerSymbolTests {
             .syntaxFeature.whereClause
         )
     )
-    func testInitializerWithCompoundWhereClause() {
+    func initializerWithCompoundWhereClause() {
         let sut = visitor()
         let node = node("init<T>(item: T) where T: Codable & Sendable {}")
         let result = sut.parseSymbols(node: node, fileName: "")

@@ -1,20 +1,11 @@
-//
-//  PropertyWrapperSymbolTests.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 28.04.2025.
-//
-
 import Common
 import SwiftParser
 import SwiftSyntax
 import Testing
-
 @testable import SyntaxAnalysis
 
 @Suite("Property Wrapper Usages")
 struct PropertyWrapperSymbolTests {
-
     // MARK: - Setup
 
     private func visitor() -> SyntaxSymbolsVisitor {
@@ -31,7 +22,7 @@ struct PropertyWrapperSymbolTests {
         "Simple property wrapper usage.",
         .tags(.symbolKind.usage)
     )
-    func testSimplePropertyWrapperUsage() {
+    func simplePropertyWrapperUsage() {
         let sut = visitor()
         let node = node("""
         @State var title: String
@@ -61,7 +52,7 @@ struct PropertyWrapperSymbolTests {
         "Multiple property wrappers on one property.",
         .tags(.symbolKind.usage)
     )
-    func testMultiplePropertyWrappers() {
+    func multiplePropertyWrappers() {
         let sut = visitor()
         let node = node("""
         @State @Published var count: Int
@@ -99,7 +90,7 @@ struct PropertyWrapperSymbolTests {
         "Property wrapper with closure parameter.",
         .tags(.symbolKind.usage)
     )
-    func testPropertyWrapperWithClosure() {
+    func propertyWrapperWithClosure() {
         let sut = visitor()
         let node = node("""
         @CustomWrapper(transform: { $0.uppercased() }) var name: String

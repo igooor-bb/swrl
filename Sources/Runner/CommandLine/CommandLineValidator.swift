@@ -1,10 +1,3 @@
-//
-//  CommandLineValidator.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 23.03.2025.
-//
-
 import ArgumentParser
 import Foundation
 

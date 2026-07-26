@@ -1,10 +1,3 @@
-//
-//  SymbolsResolver.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 22.03.2025.
-//
-
 import Common
 import Foundation
 import IndexStoreDB
@@ -21,7 +14,6 @@ enum SymbolResolverError: Error, CustomStringConvertible {
 }
 
 public final class SymbolsResolver: @unchecked Sendable {
-
     // MARK: - Nested Types
 
     private typealias IndexStoreSymbolOccurrence = SymbolOccurrence
@@ -50,7 +42,7 @@ public final class SymbolsResolver: @unchecked Sendable {
         let libraryPath = try xcodeSettings.indexStoreLibraryURL()
         let library = try IndexStoreLibrary(dylibPath: libraryPath.path)
 
-        self.database = try IndexStoreDB(
+        database = try IndexStoreDB(
             storePath: storeURL.appendingPathComponent(Constants.dataStorePath).path,
             databasePath: databaseURL.path,
             library: library,
@@ -58,7 +50,7 @@ public final class SymbolsResolver: @unchecked Sendable {
             waitUntilDoneInitializing: false,
             listenToUnitEvents: true
         )
-        self.frameworksIndex = FrameworksIndex(
+        frameworksIndex = FrameworksIndex(
             storeURL: storeURL,
             analyzer: frameworksAnalyzer
         )
@@ -158,7 +150,6 @@ public final class SymbolsResolver: @unchecked Sendable {
         imports: Set<String>,
         currentModuleName: String
     ) -> SymbolResolution? {
-
         // If the module name is explicitly specified when using, we can immediately resolve it.
         if let fqn = symbol.fullyQualifiedName {
             let fqnComponents = fqn.components(separatedBy: ".")
@@ -177,7 +168,6 @@ public final class SymbolsResolver: @unchecked Sendable {
 
         switch lookupResult {
         case let .resolved(possibleOccurrences):
-
             // Looking for occurrences that fit the modules used.
             // A symbol module can (but not have to) consist of several parts separated by a period.
             // Example: Foundation.NSFileCoordinator
@@ -189,7 +179,7 @@ public final class SymbolsResolver: @unchecked Sendable {
             }
 
             // Remove duplicate occurrences, considering the USR to be unique identifier.
-            let filteredOccurrences = relatedOccurrences.reduce((Set<String>(), [IndexStoreSymbolOccurrence]())) { (acc, occ) in
+            let filteredOccurrences = relatedOccurrences.reduce((Set<String>(), [IndexStoreSymbolOccurrence]())) { acc, occ in
                 var (usrSet, filteredOccurrences) = acc
                 if !usrSet.contains(occ.symbol.usr) {
                     usrSet.insert(occ.symbol.usr)
@@ -277,7 +267,8 @@ public final class SymbolsResolver: @unchecked Sendable {
         ) { occurrence in
             guard
                 allowedKinds.contains(occurrence.symbol.kind) &&
-                occurrence.roles.contains(.definition) || occurrence.roles.contains(.declaration) else {
+                occurrence.roles.contains(.definition) || occurrence.roles.contains(.declaration)
+            else {
                 return true
             }
 
@@ -288,7 +279,7 @@ public final class SymbolsResolver: @unchecked Sendable {
         // If occurrences are found only in system libraries,
         // we consider the dependency to be system.
         let filteredOccurrences = foundOccurrences.filter { !$0.location.isSystem }
-        if !foundOccurrences.isEmpty && filteredOccurrences.isEmpty {
+        if !foundOccurrences.isEmpty, filteredOccurrences.isEmpty {
             return IndexStoreLookup.system
         }
 

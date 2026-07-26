@@ -1,10 +1,3 @@
-//
-//  ShellCommandExecuting.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 22.03.2025.
-//
-
 import Foundation
 
 protocol ShellCommandExecuting {
@@ -40,7 +33,6 @@ enum ShellError: Error, CustomStringConvertible {
 }
 
 final class BashCommandExecutor: ShellCommandExecuting {
-
     @discardableResult
     func run(_ command: String) throws(ShellError) -> String {
         let process = Process()

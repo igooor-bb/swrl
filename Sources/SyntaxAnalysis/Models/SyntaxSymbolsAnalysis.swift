@@ -1,10 +1,3 @@
-//
-//  SyntaxSymbolsAnalysis.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 04.04.2025.
-//
-
 import Common
 import Foundation
 

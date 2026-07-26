@@ -1,10 +1,3 @@
-//
-//  InputFile.swift
-//  SwiftLightweightResolver
-//
-//  Created by Igor Belov on 23.03.2025.
-//
-
 import ArgumentParser
 import Foundation
 
@@ -20,6 +13,6 @@ struct InputFile: ExpressibleByArgument {
     }
 
     init?(argument: String) {
-        self.url = URL(expandingPath: argument)
+        url = URL(expandingPath: argument)
     }
 }
