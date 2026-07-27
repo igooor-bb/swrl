@@ -234,10 +234,12 @@ final class SyntaxSymbolsVisitor: SyntaxVisitor {
 
     private func uniqueFunctionIdentifier(_ node: FunctionDeclSyntax) -> String {
         let name = node.name.text
-        let parameterLabels = node.signature.parameterClause.parameters.map { param in
-            let label = param.firstName.text
-            return label == "_" ? "" : "\(label):"
-        }.joined()
+        let parameterLabels = node.signature.parameterClause.parameters
+            .map { param in
+                let label = param.firstName.text
+                return label == "_" ? "" : "\(label):"
+            }
+            .joined()
         let returnType = node.signature.returnClause?.type.description.trimmingCharacters(in: .whitespaces) ?? "Void"
         return "\(name)(\(parameterLabels)):\(returnType)"
     }

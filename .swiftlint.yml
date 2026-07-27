@@ -2,33 +2,45 @@ included:
   - Package.swift
   - Sources
   - Tests
+  - Scripts
 
 excluded:
   - .build
+  - .swiftpm
 
-disabled_rules:
-  # SwiftFormat owns these formatting decisions.
-  - opening_brace
-  - sorted_imports
-  - trailing_comma
-  - file_length
-  - type_body_length
-  - function_body_length
-  - function_parameter_count
-  - line_length
-  - identifier_name
-  - todo
+line_length:
+  warning: 140
+  error: 160
+  ignores_comments: true
+  ignores_urls: true
+  ignores_interpolated_strings: true
 
 opt_in_rules:
   - empty_count
   - comment_spacing
   - force_unwrapping
+  - multiline_function_chains
+  - void_function_in_ternary
+
+disabled_rules:
+  # SwiftFormat owns these formatting decisions. Its multiline-condition brace
+  # placement intentionally differs from SwiftLint's opening_brace rule.
+  - opening_brace
+  - file_length
+  - type_body_length
+  - function_body_length
+  - function_parameter_count
+  - identifier_name
+  - todo
+  - trailing_comma
+  - for_where
+  - cyclomatic_complexity
+
+trailing_whitespace:
+  ignores_empty_lines: true
+  ignores_comments: false
 
 warning_threshold: 3
-
-cyclomatic_complexity:
-  warning: 15
-  error: 25
 
 type_name:
   excluded:
