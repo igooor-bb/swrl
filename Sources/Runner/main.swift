@@ -1,0 +1,3 @@
+import SWRLCore
+
+CommandLineRunner.main()

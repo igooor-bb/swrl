@@ -3,8 +3,7 @@ import Foundation
 import SymbolsResolver
 import SyntaxAnalysis
 
-@main
-struct CommandLineRunner: AsyncParsableCommand {
+public struct CommandLineRunner: AsyncParsableCommand {
     // MARK: Constants
 
     private static let defaultOutputFileName = "output.json"
@@ -43,9 +42,11 @@ struct CommandLineRunner: AsyncParsableCommand {
     )
     var output: InputFile?
 
+    public init() {}
+
     // MARK: Execution
 
-    func run() async throws {
+    public func run() async throws {
         let logger = setupLogger()
         logger.printGreeting()
 
@@ -65,7 +66,7 @@ struct CommandLineRunner: AsyncParsableCommand {
         logger.printSuccess("Success! Result is written to the file: \(outputFile.url.path)")
     }
 
-    func validate() throws {
+    public func validate() throws {
         let validator = CommandLineValidator()
         try validator.validate(command: self)
     }
@@ -127,6 +128,7 @@ struct CommandLineRunner: AsyncParsableCommand {
             let result: Result<FileAnalysisContext, Error>
         }
 
+        let project = project
         return try await withThrowingTaskGroup(of: ProcessingResult.self) { group in
             for (index, file) in files.enumerated() {
                 group.addTask {

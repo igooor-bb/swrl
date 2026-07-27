@@ -36,6 +36,12 @@ let package = Package(
         .executableTarget(
             name: "Runner",
             dependencies: [
+                .target(name: "SWRLCore"),
+            ]
+        ),
+        .target(
+            name: "SWRLCore",
+            dependencies: [
                 .target(name: "Common"),
                 .target(name: "SyntaxAnalysis"),
                 .target(name: "SymbolsResolver"),
