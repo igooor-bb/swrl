@@ -1,4 +1,4 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.3
 // The swift-tools-version declares the minimum version of Swift required to build this package.
 
 import PackageDescription
@@ -16,8 +16,8 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            url: "https://github.com/apple/swift-syntax.git",
-            .upToNextMajor(from: "601.0.1")
+            url: "https://github.com/swiftlang/swift-syntax.git",
+            exact: "603.0.0"
         ),
         .package(
             url: "https://github.com/apple/swift-argument-parser.git",
@@ -25,7 +25,7 @@ let package = Package(
         ),
         .package(
             url: "https://github.com/swiftlang/indexstore-db.git",
-            branch: "release/6.1"
+            revision: "003ac41513ba291f10ff1a0147ae68588914668d"
         ),
         .package(
             url: "https://github.com/onevcat/Rainbow.git",
