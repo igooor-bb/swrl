@@ -66,6 +66,10 @@ let package = Package(
         ),
         .target(name: "Common"),
         .testTarget(
+            name: "SWRLCoreTests",
+            dependencies: [.target(name: "SWRLCore")]
+        ),
+        .testTarget(
             name: "SyntaxAnalysisTests",
             dependencies: [.target(name: "SyntaxAnalysis")]
         ),

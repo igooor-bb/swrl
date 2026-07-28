@@ -1,21 +1,29 @@
 import Foundation
 import SymbolsResolver
 
-enum XcodeSettingsError: Error, CustomStringConvertible {
+enum XcodeSettingsError: Error, Equatable, CustomStringConvertible {
     case missingCommandLineTools
-    case missingIndexStoreLibrary
+    case invalidDeveloperDirectory(URL)
+    case missingIndexStoreLibrary(URL)
     case missingDerivedDataLocation
+    case missingXcodeVersion(URL)
 
     var description: String {
         switch self {
         case .missingCommandLineTools:
             "Missing Xcode or Xcode Command Line Tools."
 
-        case .missingIndexStoreLibrary:
-            "Unable to find indexStore.dylib path. Please ensure that Xcode is installed correctly."
+        case let .invalidDeveloperDirectory(url):
+            "The active developer directory does not exist: \(url.path)"
+
+        case let .missingIndexStoreLibrary(url):
+            "Unable to find libIndexStore at \(url.path). Please ensure that the active Xcode is installed correctly."
 
         case .missingDerivedDataLocation:
             "Unable to find DerivedData location. Please ensure that Xcode is installed correctly."
+
+        case let .missingXcodeVersion(url):
+            "Unable to read the active Xcode version from \(url.path)."
         }
     }
 }
@@ -25,35 +33,34 @@ final class XcodeSettings: XcodeSettingsProviding {
         static let xcodeDefaultsSuiteName = "com.apple.dt.Xcode.plist"
         static let customDerivedDataLocationKey = "IDECustomDerivedDataLocation"
         static let defaultDerivedDataLocation = "~/Library/Developer/Xcode/DerivedData"
-        static let indexStoreLibraryPath = "Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/libIndexStore.dylib"
-        static let xcodeInfoPlistPath = "Contents/Info.plist"
+        static let indexStoreLibraryPath = "Toolchains/XcodeDefault.xctoolchain/usr/lib/libIndexStore.dylib"
+        static let xcodeInfoPlistName = "Info.plist"
+        static let xcodeVersionKey = "CFBundleShortVersionString"
         static let indexStoreRootPath = "Index.noindex"
         static let legacyIndexStoreRootPath = "Index"
+        static let xcodeSelectURL = URL(fileURLWithPath: "/usr/bin/xcode-select")
     }
 
-    private let userDefaults = UserDefaults(suiteName: Constants.xcodeDefaultsSuiteName)
-    private let shell: ShellCommandExecuting
-    private var activeXcodeURL: URL!
+    private let environment: [String: String]
+    private let fileManager: FileManager
+    private let processRunner: ProcessRunning
+    private let userDefaults: UserDefaults?
+    private var developerDirectoryURL: URL?
 
-    init(shell: ShellCommandExecuting) {
-        self.shell = shell
+    init(
+        processRunner: ProcessRunning = FoundationProcessRunner(),
+        environment: [String: String] = ProcessInfo.processInfo.environment,
+        fileManager: FileManager = .default,
+        userDefaults: UserDefaults? = UserDefaults(suiteName: Constants.xcodeDefaultsSuiteName)
+    ) {
+        self.processRunner = processRunner
+        self.environment = environment
+        self.fileManager = fileManager
+        self.userDefaults = userDefaults
     }
 
     func ensureXcodeCommandLineToolsInstalled() throws {
-        do {
-            let activeXcodePath = try shell.run("xcode-select -p")
-            activeXcodeURL = URL(expandingPath: activeXcodePath)
-                .deletingLastPathComponent()
-                .deletingLastPathComponent()
-        } catch {
-            switch error {
-            case .executionFailed:
-                throw XcodeSettingsError.missingCommandLineTools
-
-            default:
-                throw error
-            }
-        }
+        _ = try resolveDeveloperDirectoryURL()
     }
 
     func derivedDataURL() throws -> URL {
@@ -61,7 +68,7 @@ final class XcodeSettings: XcodeSettingsProviding {
         let xcodePath = customDerivedDataLocation ?? Constants.defaultDerivedDataLocation
         let xcodeURL = URL(expandingPath: xcodePath)
 
-        if FileManager.default.fileExists(atURL: xcodeURL) {
+        if fileManager.fileExists(atPath: xcodeURL.path) {
             return xcodeURL
         } else {
             throw XcodeSettingsError.missingDerivedDataLocation
@@ -78,18 +85,63 @@ final class XcodeSettings: XcodeSettingsProviding {
     }
 
     func indexStoreLibraryURL() throws -> URL {
-        let indexStoreLibraryURL = activeXcodeURL
+        let indexStoreLibraryURL = try resolveDeveloperDirectoryURL()
             .appendingPathComponent(Constants.indexStoreLibraryPath)
 
-        if FileManager.default.fileExists(atURL: indexStoreLibraryURL) {
+        if fileManager.fileExists(atPath: indexStoreLibraryURL.path) {
             return indexStoreLibraryURL
         } else {
-            throw XcodeSettingsError.missingIndexStoreLibrary
+            throw XcodeSettingsError.missingIndexStoreLibrary(indexStoreLibraryURL)
         }
     }
 
     private func xcodeVersion() throws -> String {
-        let infoPlistURL = activeXcodeURL.appendingPathComponent(Constants.xcodeInfoPlistPath)
-        return try shell.run("/usr/libexec/PlistBuddy -c \"Print CFBundleShortVersionString\" \(infoPlistURL.path)")
+        let infoPlistURL = try resolveDeveloperDirectoryURL()
+            .deletingLastPathComponent()
+            .appendingPathComponent(Constants.xcodeInfoPlistName)
+        let data = try Data(contentsOf: infoPlistURL)
+        let plist = try PropertyListSerialization.propertyList(from: data, options: [], format: nil)
+
+        guard
+            let values = plist as? [String: Any],
+            let version = values[Constants.xcodeVersionKey] as? String
+        else {
+            throw XcodeSettingsError.missingXcodeVersion(infoPlistURL)
+        }
+
+        return version
+    }
+
+    private func resolveDeveloperDirectoryURL() throws -> URL {
+        if let developerDirectoryURL {
+            return developerDirectoryURL
+        }
+
+        let developerDirectoryPath: String
+        if let configuredPath = environment["DEVELOPER_DIR"]?.trimmingCharacters(in: .whitespacesAndNewlines), !configuredPath.isEmpty {
+            developerDirectoryPath = configuredPath
+        } else {
+            do {
+                let output = try processRunner.run(
+                    ProcessCommand(executableURL: Constants.xcodeSelectURL, arguments: ["-p"])
+                )
+                developerDirectoryPath = output.standardOutput.trimmingCharacters(in: .whitespacesAndNewlines)
+            } catch {
+                throw XcodeSettingsError.missingCommandLineTools
+            }
+        }
+
+        guard !developerDirectoryPath.isEmpty else {
+            throw XcodeSettingsError.missingCommandLineTools
+        }
+
+        let resolvedURL = URL(expandingPath: developerDirectoryPath)
+        var isDirectory: ObjCBool = false
+        guard fileManager.fileExists(atPath: resolvedURL.path, isDirectory: &isDirectory), isDirectory.boolValue else {
+            throw XcodeSettingsError.invalidDeveloperDirectory(resolvedURL)
+        }
+
+        developerDirectoryURL = resolvedURL
+        return resolvedURL
     }
 }

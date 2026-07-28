@@ -81,7 +81,7 @@ public struct CommandLineRunner: AsyncParsableCommand {
     }
 
     private func setupResolver(project: InputFile) throws -> SymbolsResolver {
-        let xcodeSettings = XcodeSettings(shell: BashCommandExecutor())
+        let xcodeSettings = XcodeSettings()
         try xcodeSettings.ensureXcodeCommandLineToolsInstalled()
 
         let derivedDataProvider = ProjectDerivedDataFinder(xcodeSettings: xcodeSettings)
