@@ -84,27 +84,18 @@ public struct CommandLineRunner: AsyncParsableCommand {
         let xcodeSettings = XcodeSettings()
         try xcodeSettings.ensureXcodeCommandLineToolsInstalled()
 
-        let derivedDataProvider = ProjectDerivedDataFinder(xcodeSettings: xcodeSettings)
-        let projectDerivedDataURL = try derivedDataProvider.findForProject(at: project.url)
-        let indexStoreURL = try resolveIndexStoreURL(
-            projectDerivedDataURL: projectDerivedDataURL,
-            xcodeSettings: xcodeSettings
-        )
+        let indexLocation = try ProjectIndexLocator(xcodeSettings: xcodeSettings)
+            .locate(projectURL: project.url)
 
         let databaseName = project.url.deletingPathExtension().lastPathComponent
         let databaseURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".swrl/\(databaseName)")
 
         return try SymbolsResolver(
-            storeURL: indexStoreURL,
+            storeURL: indexLocation.indexStoreURL,
             databaseURL: databaseURL,
             xcodeSettings: xcodeSettings,
             frameworksAnalyzer: SyntaxSymbolsAnalyzer()
         )
-    }
-
-    private func resolveIndexStoreURL(projectDerivedDataURL: URL, xcodeSettings: XcodeSettings) throws -> URL {
-        let indexStorePath = try xcodeSettings.relativeIndexStorePath()
-        return projectDerivedDataURL.appendingPathComponent(indexStorePath)
     }
 
     private func gatherFiles() throws -> [InputFile] {

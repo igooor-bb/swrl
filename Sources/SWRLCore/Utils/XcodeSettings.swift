@@ -5,7 +5,6 @@ enum XcodeSettingsError: Error, Equatable, CustomStringConvertible {
     case missingCommandLineTools
     case invalidDeveloperDirectory(URL)
     case missingIndexStoreLibrary(URL)
-    case missingDerivedDataLocation
     case missingXcodeVersion(URL)
 
     var description: String {
@@ -18,9 +17,6 @@ enum XcodeSettingsError: Error, Equatable, CustomStringConvertible {
 
         case let .missingIndexStoreLibrary(url):
             "Unable to find libIndexStore at \(url.path). Please ensure that the active Xcode is installed correctly."
-
-        case .missingDerivedDataLocation:
-            "Unable to find DerivedData location. Please ensure that Xcode is installed correctly."
 
         case let .missingXcodeVersion(url):
             "Unable to read the active Xcode version from \(url.path)."
@@ -66,13 +62,7 @@ final class XcodeSettings: XcodeSettingsProviding {
     func derivedDataURL() throws -> URL {
         let customDerivedDataLocation = userDefaults?.string(forKey: Constants.customDerivedDataLocationKey)
         let xcodePath = customDerivedDataLocation ?? Constants.defaultDerivedDataLocation
-        let xcodeURL = URL(expandingPath: xcodePath)
-
-        if fileManager.fileExists(atPath: xcodeURL.path) {
-            return xcodeURL
-        } else {
-            throw XcodeSettingsError.missingDerivedDataLocation
-        }
+        return URL(expandingPath: xcodePath)
     }
 
     func relativeIndexStorePath() throws -> String {
