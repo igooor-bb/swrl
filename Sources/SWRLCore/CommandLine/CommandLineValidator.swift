@@ -1,7 +1,7 @@
 import ArgumentParser
 import Foundation
 
-enum ArgumentsValidationError: Error, CustomStringConvertible {
+enum ArgumentsValidationError: Error, Equatable, CustomStringConvertible {
     case invalidArguments(String)
     case fileDoesNotExist(URL)
     case unexpected
@@ -26,6 +26,7 @@ struct CommandLineValidator {
     func validate(command: CommandLineRunner) throws {
         try validateProjectFile(command.project)
         try validateInputFiles(command.inputFiles)
+        try validateIndexOverrides(command)
     }
 
     private func validateProjectFile(_ project: InputFile) throws {
@@ -43,8 +44,31 @@ struct CommandLineValidator {
         }
     }
 
+    private func validateIndexOverrides(_ command: CommandLineRunner) throws {
+        guard command.derivedData == nil || command.indexStore == nil else {
+            throw ArgumentsValidationError.invalidArguments("--derived-data and --index-store are mutually exclusive")
+        }
+
+        if let derivedData = command.derivedData {
+            try validateDirectoryExists(at: derivedData.url)
+        }
+        if let indexStore = command.indexStore {
+            try validateDirectoryExists(at: indexStore.url)
+        }
+    }
+
     private func validateFileExists(at url: URL) throws {
         guard FileManager.default.fileExists(atURL: url) else {
+            throw ArgumentsValidationError.fileDoesNotExist(url)
+        }
+    }
+
+    private func validateDirectoryExists(at url: URL) throws {
+        var isDirectory: ObjCBool = false
+        guard
+            FileManager.default.fileExists(atPath: url.path, isDirectory: &isDirectory),
+            isDirectory.boolValue
+        else {
             throw ArgumentsValidationError.fileDoesNotExist(url)
         }
     }

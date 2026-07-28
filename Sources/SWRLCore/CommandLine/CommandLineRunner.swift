@@ -29,6 +29,18 @@ public struct CommandLineRunner: AsyncParsableCommand {
     )
     var pattern: String?
 
+    @Option(
+        name: .customLong("derived-data"),
+        help: "Path to the project's DerivedData directory."
+    )
+    var derivedData: InputFile?
+
+    @Option(
+        name: .customLong("index-store"),
+        help: "Path to an IndexStore directory containing DataStore."
+    )
+    var indexStore: InputFile?
+
     @Flag(
         name: [.customLong("silent"), .customShort("s")],
         help: "Suppress all output."
@@ -85,7 +97,11 @@ public struct CommandLineRunner: AsyncParsableCommand {
         try xcodeSettings.ensureXcodeCommandLineToolsInstalled()
 
         let indexLocation = try ProjectIndexLocator(xcodeSettings: xcodeSettings)
-            .locate(projectURL: project.url)
+            .locate(
+                projectURL: project.url,
+                derivedDataOverride: derivedData?.url,
+                indexStoreOverride: indexStore?.url
+            )
 
         let databaseName = project.url.deletingPathExtension().lastPathComponent
         let databaseURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".swrl/\(databaseName)")
