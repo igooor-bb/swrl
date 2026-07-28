@@ -103,8 +103,11 @@ public struct CommandLineRunner: AsyncParsableCommand {
                 indexStoreOverride: indexStore?.url
             )
 
-        let databaseName = project.url.deletingPathExtension().lastPathComponent
-        let databaseURL = FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent(".swrl/\(databaseName)")
+        let databaseURL = try IndexDatabaseCache().databaseURL(
+            projectURL: project.url,
+            indexStoreURL: indexLocation.indexStoreURL,
+            activeXcodeURL: xcodeSettings.activeDeveloperDirectoryURL()
+        )
 
         return try SymbolsResolver(
             storeURL: indexLocation.indexStoreURL,

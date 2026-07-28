@@ -59,6 +59,10 @@ final class XcodeSettings: XcodeSettingsProviding {
         _ = try resolveDeveloperDirectoryURL()
     }
 
+    func activeDeveloperDirectoryURL() throws -> URL {
+        try resolveDeveloperDirectoryURL()
+    }
+
     func derivedDataURL() throws -> URL {
         let customDerivedDataLocation = userDefaults?.string(forKey: Constants.customDerivedDataLocationKey)
         let xcodePath = customDerivedDataLocation ?? Constants.defaultDerivedDataLocation
