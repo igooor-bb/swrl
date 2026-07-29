@@ -13,7 +13,7 @@ enum SymbolResolverError: Error, CustomStringConvertible {
     }
 }
 
-public final class SymbolsResolver: @unchecked Sendable {
+public actor SymbolsResolver {
     // MARK: - Nested Types
 
     private typealias IndexStoreSymbolOccurrence = SymbolOccurrence
@@ -59,11 +59,8 @@ public final class SymbolsResolver: @unchecked Sendable {
     // MARK: Interface
 
     public func prewarm() async {
-        async let databaseTask: () = database.pollForUnitChangesAndWait()
-        async let frameworksIndexTask: () = frameworksIndex.prewarm()
-
-        await databaseTask
-        await frameworksIndexTask
+        database.pollForUnitChangesAndWait()
+        frameworksIndex.prewarm()
     }
 
     public func determineFileModule(fileURL: URL) throws -> String {
