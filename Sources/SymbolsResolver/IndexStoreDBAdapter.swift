@@ -36,11 +36,8 @@ actor IndexStoreDBAdapter: SymbolIndexReading {
     }
 
     func determineFileModule(fileURL: URL) async throws -> String {
-        let symbols = database.symbols(inFilePath: fileURL.path)
-        let kindsOfInterest: Set<IndexSymbolKind> = [.class, .struct, .protocol, .typealias, .enum, .extension, .function]
-        let symbolOfInterest = symbols.first { kindsOfInterest.contains($0.kind) }
-
-        guard let symbolOfInterest, let moduleName = extractSymbolName(from: symbolOfInterest.usr) else {
+        let occurrences = database.symbolOccurrences(inFilePath: fileURL.path)
+        guard let moduleName = Self.moduleName(from: occurrences) else {
             throw SymbolResolverError.moduleNameNotFound(fileName: fileURL.lastPathComponent)
         }
         return moduleName
@@ -56,10 +53,7 @@ actor IndexStoreDBAdapter: SymbolIndexReading {
             subsequence: false,
             ignoreCase: false
         ) { occurrence in
-            guard
-                allowedKinds.contains(occurrence.symbol.kind) &&
-                occurrence.roles.contains(.definition) || occurrence.roles.contains(.declaration)
-            else {
+            guard Self.isResolutionCandidate(occurrence, allowedKinds: allowedKinds) else {
                 return true
             }
 
@@ -87,20 +81,18 @@ actor IndexStoreDBAdapter: SymbolIndexReading {
         }
     }
 
-    private func extractSymbolName(from usr: String) -> String? {
-        guard
-            usr.hasPrefix("s:"),
-            let mangledSymbolName = usr.components(separatedBy: ":").last
-        else {
-            return nil
-        }
+    static func moduleName(from occurrences: [SymbolOccurrence]) -> String? {
+        let kindsOfInterest: Set<IndexSymbolKind> = [.class, .struct, .protocol, .typealias, .enum, .extension, .function]
+        return occurrences.first {
+            kindsOfInterest.contains($0.symbol.kind) && !$0.location.moduleName.isEmpty
+        }?.location.moduleName
+    }
 
-        let demangledSymbolName = demangleSwiftSymbol("$s" + mangledSymbolName)
-        guard demangledSymbolName != mangledSymbolName else {
-            return nil
-        }
-
-        let components = demangledSymbolName.components(separatedBy: ".")
-        return components.first
+    static func isResolutionCandidate(
+        _ occurrence: SymbolOccurrence,
+        allowedKinds: Set<IndexSymbolKind> = [.class, .struct, .protocol, .enum, .typealias, .macro]
+    ) -> Bool {
+        allowedKinds.contains(occurrence.symbol.kind) &&
+            (occurrence.roles.contains(.definition) || occurrence.roles.contains(.declaration))
     }
 }

@@ -93,11 +93,10 @@ struct SymbolResolutionEngine: Sendable {
             }
         } else {
             let finalOccurrence = filteredOccurrences[0]
-            let foundModuleName = finalOccurrence.moduleName
             return .resolvedSymbol(
                 symbol,
                 indexOccurrence: finalOccurrence,
-                currentModuleName: foundModuleName
+                currentModuleName: currentModuleName
             )
         }
     }

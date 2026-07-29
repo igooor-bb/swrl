@@ -71,7 +71,10 @@ let package = Package(
         ),
         .testTarget(
             name: "SymbolsResolverTests",
-            dependencies: [.target(name: "SymbolsResolver")]
+            dependencies: [
+                .target(name: "SymbolsResolver"),
+                .product(name: "IndexStoreDB", package: "indexstore-db"),
+            ]
         ),
         .testTarget(
             name: "SyntaxAnalysisTests",

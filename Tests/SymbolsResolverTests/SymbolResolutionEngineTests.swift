@@ -54,6 +54,29 @@ struct SymbolResolutionEngineTests {
         )
     }
 
+    @Test("A single external submodule candidate stays external")
+    func resolvesSingleExternalCandidate() throws {
+        let symbol = usage("RemoteFeature")
+        let resolution = try #require(
+            SymbolResolutionEngine().resolve(
+                symbol,
+                lookup: .resolved([
+                    indexedSymbol("RemoteFeature", module: "FeatureKit.Models", kind: .class),
+                ]),
+                imports: ["App", "FeatureKit", "Foundation"],
+                currentModuleName: "App"
+            )
+        )
+
+        #expect(
+            resolution == SymbolResolution(
+                targetSymbol: symbol,
+                origin: .externalModule("FeatureKit.Models"),
+                originKind: .class
+            )
+        )
+    }
+
     private func usage(_ name: String) -> SyntaxSymbolOccurrence {
         SyntaxSymbolOccurrence(
             symbolName: name,
