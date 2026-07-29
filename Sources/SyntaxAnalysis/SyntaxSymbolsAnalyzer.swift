@@ -3,7 +3,7 @@ import Foundation
 import SwiftParser
 import SwiftSyntax
 
-public final class SyntaxSymbolsAnalyzer {
+public struct SyntaxSymbolsAnalyzer: Sendable {
     private static let swiftBuiltInTypes: Set<String> = [
         "Bool", "String", "Int", "Double", "Float", "Any", "AnyObject", "AnyHashable", "Never", "Optional", "Void",
     ]

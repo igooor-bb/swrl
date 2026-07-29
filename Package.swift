@@ -70,6 +70,10 @@ let package = Package(
             dependencies: [.target(name: "SWRLCore")]
         ),
         .testTarget(
+            name: "SymbolsResolverTests",
+            dependencies: [.target(name: "SymbolsResolver")]
+        ),
+        .testTarget(
             name: "SyntaxAnalysisTests",
             dependencies: [.target(name: "SyntaxAnalysis")]
         ),

@@ -3,7 +3,7 @@ import Foundation
 
 // MARK: Dependencies
 
-public protocol FrameworkDefinitionsAnalyzer {
+public protocol FrameworkDefinitionsAnalyzer: Sendable {
     func findDefinitions(at url: URL) -> [SyntaxSymbolOccurrence]
 }
 
