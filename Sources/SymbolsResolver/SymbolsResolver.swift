@@ -52,7 +52,7 @@ public actor SymbolsResolver {
         var orphanSymbols: Set<SyntaxSymbolOccurrence> = []
         var result: [SymbolResolution] = []
 
-        for symbol in symbols where symbol.kind == .usage {
+        for symbol in symbols.sorted(by: SyntaxSymbolOccurrence.stableOrder) where symbol.kind == .usage {
             let lookup = await symbolIndex.lookup(symbolName: symbol.symbolName)
             let resolution = resolutionEngine.resolve(
                 symbol,
@@ -72,7 +72,10 @@ public actor SymbolsResolver {
                 Array(orphanSymbols),
                 imports: generalizedImports
             )
-            for (occurrence, frameworkLookup) in resolvedSymbols {
+            let sortedFrameworkResolutions = resolvedSymbols.sorted {
+                SyntaxSymbolOccurrence.stableOrder($0.key, $1.key)
+            }
+            for (occurrence, frameworkLookup) in sortedFrameworkResolutions {
                 if case let .definition(kind) = frameworkLookup.symbol.kind {
                     let resolution = SymbolResolution.external(
                         symbol: occurrence,
@@ -85,11 +88,11 @@ public actor SymbolsResolver {
                 }
             }
 
-            for occurrence in orphanSymbols {
+            for occurrence in orphanSymbols.sorted(by: SyntaxSymbolOccurrence.stableOrder) {
                 result.append(.unknown(symbol: occurrence))
             }
         }
 
-        return result
+        return result.sorted(by: SymbolResolution.stableOrder)
     }
 }

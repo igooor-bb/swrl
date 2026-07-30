@@ -1,7 +1,7 @@
 import ArgumentParser
 import Foundation
 
-struct InputFile: ExpressibleByArgument {
+struct InputFile: ExpressibleByArgument, Hashable, Sendable {
     let url: URL
 
     var name: String {
@@ -10,6 +10,10 @@ struct InputFile: ExpressibleByArgument {
 
     var fileExtension: String {
         url.pathExtension
+    }
+
+    var normalizedPath: String {
+        url.standardizedFileURL.resolvingSymlinksInPath().path
     }
 
     init(path: String) {

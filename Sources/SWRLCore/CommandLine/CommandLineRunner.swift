@@ -125,7 +125,7 @@ public struct CommandLineRunner: AsyncParsableCommand {
                 .filter { $0.fileExtension == "swift" }
             totalFiles += extraFiles
         }
-        return totalFiles
+        return totalFiles.sorted { $0.normalizedPath < $1.normalizedPath }
     }
 
     private func processFiles(
@@ -133,45 +133,28 @@ public struct CommandLineRunner: AsyncParsableCommand {
         resolver: SymbolsResolver,
         logger: Logger
     ) async throws -> [OutputModel] {
-        struct ProcessingResult {
-            let file: InputFile
-            let result: Result<FileAnalysisContext, Error>
+        let coordinator = AnalysisCoordinator()
+        let processingResults = await coordinator.process(files: files) { file in
+            let tool = CommandLineTool(resolver: resolver)
+            return try await tool.processInputFile(file)
         }
 
-        let project = project
-        return try await withThrowingTaskGroup(of: ProcessingResult.self) { group in
-            for (index, file) in files.enumerated() {
-                group.addTask {
-                    let tool = CommandLineTool(logger: logger, resolver: resolver, project: project)
+        var results: [OutputModel] = []
+        for processingResult in processingResults {
+            switch processingResult.outcome {
+            case let .success(context):
+                try logger.displayFileSection(for: processingResult.file) {
+                    context.printDescription(with: logger)
+                }
+                results.append(context.dumpOutput())
 
-                    do {
-                        let context = try await tool.processInputFile(file, at: index, totalCount: files.count)
-                        return ProcessingResult(file: file, result: .success(context))
-                    } catch {
-                        return ProcessingResult(file: file, result: .failure(error))
-                    }
+            case let .failure(error):
+                try logger.displayFileSection(for: processingResult.file) {
+                    logger.logError(error)
                 }
             }
-
-            var results: [OutputModel] = []
-            for try await processingResult in group {
-                let result = processingResult.result
-
-                switch result {
-                case let .success(context):
-                    try logger.displayFileSection(for: processingResult.file) {
-                        context.printDescription(with: logger)
-                    }
-                    results.append(context.dumpOutput())
-
-                case let .failure(error):
-                    try logger.displayFileSection(for: processingResult.file) {
-                        logger.logError(error)
-                    }
-                }
-            }
-
-            return results
         }
+
+        return results
     }
 }

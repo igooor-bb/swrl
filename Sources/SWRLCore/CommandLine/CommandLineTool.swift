@@ -2,24 +2,14 @@ import Foundation
 import SymbolsResolver
 import SyntaxAnalysis
 
-final class CommandLineTool {
-    private let logger: Logger
-    private let project: InputFile
+struct CommandLineTool: Sendable {
     private let resolver: SymbolsResolver
 
-    private var stepNumber = 1
-
-    init(
-        logger: Logger,
-        resolver: SymbolsResolver,
-        project: InputFile
-    ) {
-        self.logger = logger
+    init(resolver: SymbolsResolver) {
         self.resolver = resolver
-        self.project = project
     }
 
-    func processInputFile(_ file: InputFile, at _: Int, totalCount _: Int) async throws -> FileAnalysisContext {
+    func processInputFile(_ file: InputFile) async throws -> FileAnalysisContext {
         let syntaxContext = try await createSyntaxAnalysisContext(for: file)
         let analyzedContext = try performSyntaxAnalysis(on: syntaxContext)
         return try await performSymbolsResolution(on: analyzedContext)

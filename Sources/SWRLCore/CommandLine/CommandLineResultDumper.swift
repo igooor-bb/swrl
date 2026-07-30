@@ -51,14 +51,16 @@ extension FileAnalysisContext {
     func dumpOutput() -> OutputModel {
         let outputImports = imports.sorted()
         let outputDeclarations = declarations
-            .sorted { $0.symbolName < $1.symbolName }
+            .sorted(by: SyntaxSymbolOccurrence.stableOrder)
             .compactMap(createDeclaration)
-        let outputResolutions = resolvedSymbols.compactMap { resolution in
-            createOutputResolution(
-                from: resolution,
-                currentModuleName: moduleName
-            )
-        }
+        let outputResolutions = resolvedSymbols
+            .sorted(by: SymbolResolution.stableOrder)
+            .compactMap { resolution in
+                createOutputResolution(
+                    from: resolution,
+                    currentModuleName: moduleName
+                )
+            }
 
         return OutputModel(
             file: file.url.path,

@@ -83,9 +83,11 @@ actor IndexStoreDBAdapter: SymbolIndexReading {
 
     static func moduleName(from occurrences: [SymbolOccurrence]) -> String? {
         let kindsOfInterest: Set<IndexSymbolKind> = [.class, .struct, .protocol, .typealias, .enum, .extension, .function]
-        return occurrences.first {
-            kindsOfInterest.contains($0.symbol.kind) && !$0.location.moduleName.isEmpty
-        }?.location.moduleName
+        return occurrences
+            .filter { kindsOfInterest.contains($0.symbol.kind) && !$0.location.moduleName.isEmpty }
+            .map(\.location.moduleName)
+            .sorted()
+            .first
     }
 
     static func isResolutionCandidate(
