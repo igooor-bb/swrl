@@ -22,7 +22,7 @@ final class CommandLineTool {
     func processInputFile(_ file: InputFile, at _: Int, totalCount _: Int) async throws -> FileAnalysisContext {
         let syntaxContext = try await createSyntaxAnalysisContext(for: file)
         let analyzedContext = try performSyntaxAnalysis(on: syntaxContext)
-        return await performSymbolsResolution(on: analyzedContext)
+        return try await performSymbolsResolution(on: analyzedContext)
     }
 
     // MARK: Processing
@@ -47,8 +47,8 @@ final class CommandLineTool {
     }
 
     /// Step 3
-    private func performSymbolsResolution(on context: FileAnalysisContext) async -> FileAnalysisContext {
-        let resolvedSymbols = await resolver.resolveSymbols(
+    private func performSymbolsResolution(on context: FileAnalysisContext) async throws -> FileAnalysisContext {
+        let resolvedSymbols = try await resolver.resolveSymbols(
             Array(context.dependencies),
             relativeToModule: context.moduleName,
             amongDependencies: context.imports

@@ -4,7 +4,30 @@ import Foundation
 // MARK: Dependencies
 
 public protocol FrameworkDefinitionsAnalyzer: Sendable {
-    func findDefinitions(at url: URL) -> [SyntaxSymbolOccurrence]
+    func findDefinitions(at url: URL) throws -> [SyntaxSymbolOccurrence]
+}
+
+enum FrameworkIndexError: Error, CustomStringConvertible {
+    case directoryEnumerationFailed(URL, reason: String)
+    case resourceInspectionFailed(URL, reason: String)
+    case interfaceDirectoryReadFailed(framework: String, URL, reason: String)
+    case interfaceAnalysisFailed(framework: String, URL, reason: String)
+
+    var description: String {
+        switch self {
+        case let .directoryEnumerationFailed(url, reason):
+            "Unable to enumerate frameworks at \(url.path): \(reason)"
+
+        case let .resourceInspectionFailed(url, reason):
+            "Unable to inspect framework resource at \(url.path): \(reason)"
+
+        case let .interfaceDirectoryReadFailed(framework, url, reason):
+            "Unable to read the \(framework) interface directory at \(url.path): \(reason)"
+
+        case let .interfaceAnalysisFailed(framework, url, reason):
+            "Unable to analyze the \(framework) interface at \(url.path): \(reason)"
+        }
+    }
 }
 
 final class FrameworksIndex {
@@ -31,8 +54,8 @@ final class FrameworksIndex {
         self.analyzer = analyzer
     }
 
-    func prewarm() {
-        frameworkDirectoryByName = findFrameworkDirectories(in: indexStoreURL)
+    func prewarm() throws {
+        frameworkDirectoryByName = try findFrameworkDirectories(in: indexStoreURL)
     }
 
     // MARK: Interface
@@ -40,7 +63,7 @@ final class FrameworksIndex {
     func resolveSymbols(
         _ symbolsToResolve: [SyntaxSymbolOccurrence],
         imports: Set<String>
-    ) -> [SyntaxSymbolOccurrence: FrameworkSymbolLookup] {
+    ) throws -> [SyntaxSymbolOccurrence: FrameworkSymbolLookup] {
         // We are looking only among frameworks that are listed in imports:
         let frameworkDirectories = frameworkDirectoryByName
             .filter { imports.contains($0.key) }
@@ -50,12 +73,21 @@ final class FrameworksIndex {
         var lookupsBySymbolIdentifier: [String: [FrameworkSymbolLookup]] = [:]
 
         for (frameworkName, frameworkDirectoryURL) in frameworkDirectories {
-            let frameworkInterfaceFileURL = interfaceContentForFramework(frameworkName, at: frameworkDirectoryURL)
+            let frameworkInterfaceFileURL = try interfaceContentForFramework(frameworkName, at: frameworkDirectoryURL)
             guard let frameworkInterfaceFileURL else { continue }
 
             // Analyze the interface file using the SwiftSyntax analysis, since the interface conforms to Swift.
             // We consider only definitions.
-            let result = analyzer.findDefinitions(at: frameworkInterfaceFileURL)
+            let result: [SyntaxSymbolOccurrence]
+            do {
+                result = try analyzer.findDefinitions(at: frameworkInterfaceFileURL)
+            } catch {
+                throw FrameworkIndexError.interfaceAnalysisFailed(
+                    framework: frameworkName,
+                    frameworkInterfaceFileURL,
+                    reason: String(describing: error)
+                )
+            }
             for item in result {
                 lookupsBySymbolIdentifier[item.symbolName, default: []].append(
                     FrameworkSymbolLookup(frameworkName: frameworkName, symbol: item)
@@ -80,7 +112,7 @@ final class FrameworksIndex {
 
     // MARK: - Helpers
 
-    private func interfaceContentForFramework(_ framework: String, at url: URL) -> URL? {
+    private func interfaceContentForFramework(_ framework: String, at url: URL) throws -> URL? {
         let swiftModulePath = "Modules/\(framework).swiftmodule"
         let swiftModuleURL = url.appendingPathComponent(swiftModulePath)
 
@@ -88,37 +120,40 @@ final class FrameworksIndex {
             return nil
         }
 
+        let files: [URL]
         do {
-            let files = try FileManager.default.contentsOfDirectory(
+            files = try FileManager.default.contentsOfDirectory(
                 at: swiftModuleURL,
                 includingPropertiesForKeys: [.isRegularFileKey],
                 options: .skipsHiddenFiles
             )
-            guard let swiftInterfaceFile = files.first(where: { $0.pathExtension == "swiftinterface" }) else {
-                return nil
-            }
-            return swiftInterfaceFile
         } catch {
-            return nil
+            throw FrameworkIndexError.interfaceDirectoryReadFailed(
+                framework: framework,
+                swiftModuleURL,
+                reason: String(describing: error)
+            )
         }
+        return files
+            .filter { $0.pathExtension == "swiftinterface" }
+            .sorted { $0.path < $1.path }
+            .first
     }
 
-    private func findFrameworkDirectories(in directory: URL) -> [String: URL] {
+    private func findFrameworkDirectories(in directory: URL) throws -> [String: URL] {
         var foundFrameworks: [String: URL] = [:]
-
-        guard let enumerator = FileManager.default.enumerator(
-            at: directory,
-            includingPropertiesForKeys: [.isDirectoryKey],
-            options: [.skipsHiddenFiles],
-            errorHandler: { _, _ -> Bool in
-                // Continue enumeration even if an error occurs.
-                return true
-            }
-        ) else {
-            return foundFrameworks
+        let subpaths: [String]
+        do {
+            subpaths = try FileManager.default.subpathsOfDirectory(atPath: directory.path).sorted()
+        } catch {
+            throw FrameworkIndexError.directoryEnumerationFailed(
+                directory,
+                reason: String(describing: error)
+            )
         }
 
-        for case let fileURL as URL in enumerator {
+        for subpath in subpaths where !subpath.split(separator: "/").contains(where: { $0.hasPrefix(".") }) {
+            let fileURL = directory.appendingPathComponent(subpath)
             do {
                 let resourceValues = try fileURL.resourceValues(forKeys: [.isDirectoryKey])
                 if resourceValues.isDirectory == true, fileURL.pathExtension == "framework" {
@@ -130,7 +165,10 @@ final class FrameworksIndex {
                     }
                 }
             } catch {
-                continue
+                throw FrameworkIndexError.resourceInspectionFailed(
+                    fileURL,
+                    reason: String(describing: error)
+                )
             }
         }
 

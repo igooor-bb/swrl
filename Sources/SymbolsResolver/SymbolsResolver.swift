@@ -34,9 +34,9 @@ public actor SymbolsResolver {
         )
     }
 
-    public func prewarm() async {
+    public func prewarm() async throws {
         await symbolIndex.prewarm()
-        frameworksIndex.prewarm()
+        try frameworksIndex.prewarm()
     }
 
     public func determineFileModule(fileURL: URL) async throws -> String {
@@ -47,7 +47,7 @@ public actor SymbolsResolver {
         _ symbols: [SyntaxSymbolOccurrence],
         relativeToModule moduleName: String,
         amongDependencies imports: Set<String>
-    ) async -> [SymbolResolution] {
+    ) async throws -> [SymbolResolution] {
         let generalizedImports = Set(imports).union(["Foundation", moduleName])
         var orphanSymbols: Set<SyntaxSymbolOccurrence> = []
         var result: [SymbolResolution] = []
@@ -68,7 +68,7 @@ public actor SymbolsResolver {
         }
 
         if !orphanSymbols.isEmpty {
-            let resolvedSymbols = frameworksIndex.resolveSymbols(
+            let resolvedSymbols = try frameworksIndex.resolveSymbols(
                 Array(orphanSymbols),
                 imports: generalizedImports
             )

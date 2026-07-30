@@ -13,10 +13,10 @@ struct FrameworksIndexTests {
             storeURL: fixture.rootURL,
             analyzer: StaticDefinitionsAnalyzer(definitions: [definition("SharedType", kind: .struct)])
         )
-        index.prewarm()
+        try index.prewarm()
         let symbol = usage("SharedType")
 
-        let result = index.resolveSymbols([symbol], imports: ["FeatureKit"])
+        let result = try index.resolveSymbols([symbol], imports: ["FeatureKit"])
 
         #expect(result[symbol]?.frameworkName == "FeatureKit")
     }
@@ -29,12 +29,38 @@ struct FrameworksIndexTests {
             storeURL: fixture.rootURL,
             analyzer: StaticDefinitionsAnalyzer(definitions: [definition("SharedType", kind: .class)])
         )
-        index.prewarm()
+        try index.prewarm()
         let symbol = usage("SharedType")
 
-        let result = index.resolveSymbols([symbol], imports: ["FeatureA", "FeatureB"])
+        let result = try index.resolveSymbols([symbol], imports: ["FeatureA", "FeatureB"])
 
         #expect(result[symbol] == nil)
+    }
+
+    @Test("Interface analysis failures include framework context")
+    func surfacesInterfaceAnalysisFailure() throws {
+        let fixture = try FrameworkFixture(names: ["BrokenKit"])
+        defer { fixture.remove() }
+        let index = FrameworksIndex(
+            storeURL: fixture.rootURL,
+            analyzer: FailingDefinitionsAnalyzer()
+        )
+        try index.prewarm()
+
+        do {
+            _ = try index.resolveSymbols([usage("SharedType")], imports: ["BrokenKit"])
+            Issue.record("Expected framework interface analysis to fail")
+        } catch let error as FrameworkIndexError {
+            guard case let .interfaceAnalysisFailed(framework, url, reason) = error else {
+                Issue.record("Unexpected framework error: \(error)")
+                return
+            }
+            #expect(framework == "BrokenKit")
+            #expect(url.pathExtension == "swiftinterface")
+            #expect(reason.contains("invalid interface"))
+        } catch {
+            Issue.record("Unexpected error: \(error)")
+        }
     }
 
     private func usage(_ name: String) -> SyntaxSymbolOccurrence {
@@ -66,6 +92,16 @@ private struct StaticDefinitionsAnalyzer: FrameworkDefinitionsAnalyzer {
 
     func findDefinitions(at _: URL) -> [SyntaxSymbolOccurrence] {
         definitions
+    }
+}
+
+private struct FailingDefinitionsAnalyzer: FrameworkDefinitionsAnalyzer {
+    private struct InvalidInterfaceError: Error, CustomStringConvertible {
+        let description = "invalid interface fixture"
+    }
+
+    func findDefinitions(at _: URL) throws -> [SyntaxSymbolOccurrence] {
+        throw InvalidInterfaceError()
     }
 }
 

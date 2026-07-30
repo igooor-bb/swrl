@@ -4,12 +4,8 @@ import SymbolsResolver
 import SyntaxAnalysis
 
 extension SyntaxSymbolsAnalyzer: FrameworkDefinitionsAnalyzer {
-    public func findDefinitions(at url: URL) -> [SyntaxSymbolOccurrence] {
-        do {
-            let result = try analyzeFile(at: url, options: .includeDefinitions)
-            return result.symbols
-        } catch {
-            return []
-        }
+    public func findDefinitions(at url: URL) throws -> [SyntaxSymbolOccurrence] {
+        let result = try analyzeFile(at: url, options: .includeDefinitions)
+        return result.symbols
     }
 }

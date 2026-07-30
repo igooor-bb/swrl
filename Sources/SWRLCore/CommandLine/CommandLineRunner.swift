@@ -63,7 +63,7 @@ public struct CommandLineRunner: AsyncParsableCommand {
         logger.printGreeting()
 
         let resolver = try setupResolver(project: project)
-        await resolver.prewarm()
+        try await resolver.prewarm()
 
         let totalFiles = try gatherFiles()
         logger.describeProcess(for: totalFiles)
