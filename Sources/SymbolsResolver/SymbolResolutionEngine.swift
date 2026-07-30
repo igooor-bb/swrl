@@ -8,16 +8,13 @@ struct SymbolResolutionEngine: Sendable {
         imports: Set<String>,
         currentModuleName: String
     ) -> SymbolResolution? {
-        if let fqn = symbol.fullyQualifiedName {
-            let fqnComponents = fqn.components(separatedBy: ".")
-            let rootModuleName = fqnComponents[0]
-            if imports.contains(rootModuleName) {
-                return .external(
-                    symbol: symbol,
-                    originKind: .unknown,
-                    dependency: rootModuleName
-                )
-            }
+        if let qualifiedResolution = resolveQualifiedSymbol(
+            symbol,
+            lookup: lookup,
+            imports: imports,
+            currentModuleName: currentModuleName
+        ) {
+            return qualifiedResolution
         }
 
         switch lookup {
@@ -43,11 +40,9 @@ struct SymbolResolutionEngine: Sendable {
         imports: Set<String>,
         currentModuleName: String
     ) -> SymbolResolution? {
-        let relatedOccurrences = possibleOccurrences.filter { occurrence in
-            let fqnComponents = occurrence.moduleName.components(separatedBy: ".")
-            let rootModuleName = fqnComponents[0]
-            return imports.contains(rootModuleName)
-        }
+        let relatedOccurrences = possibleOccurrences
+            .filter { imports.contains(rootModuleName(of: $0.moduleName)) }
+            .sorted(by: occurrencePrecedes)
 
         let filteredOccurrences = relatedOccurrences.reduce((Set<String>(), [IndexedSymbolOccurrence]())) { accumulator, occurrence in
             var (usrSet, filteredOccurrences) = accumulator
@@ -58,39 +53,31 @@ struct SymbolResolutionEngine: Sendable {
             return (usrSet, filteredOccurrences)
         }.1
 
-        var bestFitCandidate: IndexedSymbolOccurrence?
-        for occurrence in filteredOccurrences {
-            guard imports.contains(occurrence.moduleName) else { continue }
-            if bestFitCandidate == nil {
-                bestFitCandidate = occurrence
-            } else {
-                bestFitCandidate = nil
-                break
-            }
-        }
-
-        if let bestFitCandidate {
+        if let currentModuleCandidate = filteredOccurrences.first(where: { $0.moduleName == currentModuleName }) {
             return .resolvedSymbol(
                 symbol,
-                indexOccurrence: bestFitCandidate,
+                indexOccurrence: currentModuleCandidate,
                 currentModuleName: currentModuleName
             )
+        }
+
+        let exactImportedCandidates = filteredOccurrences.filter { imports.contains($0.moduleName) }
+        let exactImportedModules = Set(exactImportedCandidates.map(\.moduleName))
+        if exactImportedModules.count == 1, let exactImportedCandidate = exactImportedCandidates.first {
+            return .resolvedSymbol(
+                symbol,
+                indexOccurrence: exactImportedCandidate,
+                currentModuleName: currentModuleName
+            )
+        } else if exactImportedModules.count > 1 {
+            return .unknown(symbol: symbol)
         }
 
         let uniqueModules = Set(filteredOccurrences.map(\.moduleName))
         if uniqueModules.isEmpty {
             return nil
         } else if uniqueModules.count > 1 {
-            if uniqueModules.contains(currentModuleName) {
-                let occurrence = filteredOccurrences.first { $0.moduleName == currentModuleName }
-                return .internal(
-                    symbol: symbol,
-                    originKind: occurrence?.kind ?? .unknown,
-                    currentModuleName: currentModuleName
-                )
-            } else {
-                return .unknown(symbol: symbol)
-            }
+            return .unknown(symbol: symbol)
         } else {
             let finalOccurrence = filteredOccurrences[0]
             return .resolvedSymbol(
@@ -98,6 +85,92 @@ struct SymbolResolutionEngine: Sendable {
                 indexOccurrence: finalOccurrence,
                 currentModuleName: currentModuleName
             )
+        }
+    }
+
+    private func resolveQualifiedSymbol(
+        _ symbol: SyntaxSymbolOccurrence,
+        lookup: SymbolIndexLookup,
+        imports: Set<String>,
+        currentModuleName: String
+    ) -> SymbolResolution? {
+        guard
+            let fullyQualifiedName = symbol.fullyQualifiedName,
+            let qualifiedModuleName = fullyQualifiedName.components(separatedBy: ".").first,
+            imports.contains(qualifiedModuleName)
+        else {
+            return nil
+        }
+
+        if qualifiedModuleName == currentModuleName {
+            let currentModuleCandidate = lookup.occurrences
+                .filter { $0.moduleName == currentModuleName }
+                .sorted(by: occurrencePrecedes)
+                .first
+            return if let currentModuleCandidate {
+                .resolvedSymbol(
+                    symbol,
+                    indexOccurrence: currentModuleCandidate,
+                    currentModuleName: currentModuleName
+                )
+            } else {
+                .internal(
+                    symbol: symbol,
+                    originKind: .unknown,
+                    currentModuleName: currentModuleName
+                )
+            }
+        }
+
+        if case .system = lookup {
+            return .system(symbol: symbol)
+        }
+
+        let moduleCandidates = lookup.occurrences
+            .filter { rootModuleName(of: $0.moduleName) == qualifiedModuleName }
+            .sorted(by: occurrencePrecedes)
+        let exactCandidates = moduleCandidates.filter { $0.moduleName == qualifiedModuleName }
+        if let exactCandidate = exactCandidates.first {
+            return .resolvedSymbol(
+                symbol,
+                indexOccurrence: exactCandidate,
+                currentModuleName: currentModuleName
+            )
+        }
+
+        let candidateModules = Set(moduleCandidates.map(\.moduleName))
+        if candidateModules.count == 1, let candidate = moduleCandidates.first {
+            return .resolvedSymbol(
+                symbol,
+                indexOccurrence: candidate,
+                currentModuleName: currentModuleName
+            )
+        } else if candidateModules.count > 1 {
+            return .unknown(symbol: symbol)
+        }
+
+        return .external(
+            symbol: symbol,
+            originKind: .unknown,
+            dependency: qualifiedModuleName
+        )
+    }
+
+    private func rootModuleName(of moduleName: String) -> String {
+        moduleName.components(separatedBy: ".")[0]
+    }
+
+    private func occurrencePrecedes(_ lhs: IndexedSymbolOccurrence, _ rhs: IndexedSymbolOccurrence) -> Bool {
+        (lhs.moduleName, lhs.usr, lhs.kind.rawValue) < (rhs.moduleName, rhs.usr, rhs.kind.rawValue)
+    }
+}
+
+private extension SymbolIndexLookup {
+    var occurrences: [IndexedSymbolOccurrence] {
+        if case let .resolved(occurrences) = self {
+            occurrences
+        } else {
+            []
         }
     }
 }

@@ -77,10 +77,110 @@ struct SymbolResolutionEngineTests {
         )
     }
 
-    private func usage(_ name: String) -> SyntaxSymbolOccurrence {
+    @Test("Qualified current-module symbols resolve internally")
+    func resolvesQualifiedCurrentModuleSymbol() throws {
+        let symbol = usage("LocalFeature", qualifiedName: "App.LocalFeature")
+        let resolution = try #require(
+            SymbolResolutionEngine().resolve(
+                symbol,
+                lookup: .undefined,
+                imports: ["App", "Foundation"],
+                currentModuleName: "App"
+            )
+        )
+
+        #expect(resolution.origin == .internalToModule)
+    }
+
+    @Test("Qualified system symbols remain system dependencies")
+    func resolvesQualifiedSystemSymbol() throws {
+        let symbol = usage("URL", qualifiedName: "Foundation.URL")
+        let resolution = try #require(
+            SymbolResolutionEngine().resolve(
+                symbol,
+                lookup: .system,
+                imports: ["App", "Foundation"],
+                currentModuleName: "App"
+            )
+        )
+
+        #expect(resolution.origin == .system)
+    }
+
+    @Test("Qualification selects the matching imported module")
+    func resolvesQualifiedExternalSymbol() throws {
+        let symbol = usage("Feature", qualifiedName: "FeatureKit.Feature")
+        let resolution = try #require(
+            SymbolResolutionEngine().resolve(
+                symbol,
+                lookup: .resolved([
+                    indexedSymbol("Feature", module: "App", kind: .struct),
+                    indexedSymbol("Feature", module: "FeatureKit", kind: .class),
+                ]),
+                imports: ["App", "FeatureKit", "Foundation"],
+                currentModuleName: "App"
+            )
+        )
+
+        #expect(resolution.origin == .externalModule("FeatureKit"))
+        #expect(resolution.originKind == .class)
+    }
+
+    @Test("Multiple imported modules remain ambiguous")
+    func preservesAmbiguousExternalCandidates() throws {
+        let symbol = usage("SharedFeature")
+        let resolution = try #require(
+            SymbolResolutionEngine().resolve(
+                symbol,
+                lookup: .resolved([
+                    indexedSymbol("SharedFeature", module: "FeatureA", kind: .class),
+                    indexedSymbol("SharedFeature", module: "FeatureB", kind: .struct),
+                ]),
+                imports: ["App", "FeatureA", "FeatureB", "Foundation"],
+                currentModuleName: "App"
+            )
+        )
+
+        #expect(resolution.origin == .unknown)
+    }
+
+    @Test("Candidate input order does not affect the selected resolution")
+    func resolvesCandidatesDeterministically() throws {
+        let symbol = usage("SharedFeature")
+        let candidates = [
+            indexedSymbol("SharedFeature", module: "FeatureKit", kind: .struct, usrSuffix: "z"),
+            indexedSymbol("SharedFeature", module: "FeatureKit", kind: .class, usrSuffix: "a"),
+        ]
+        let engine = SymbolResolutionEngine()
+
+        let forward = try #require(
+            engine.resolve(
+                symbol,
+                lookup: .resolved(candidates),
+                imports: ["App", "FeatureKit", "Foundation"],
+                currentModuleName: "App"
+            )
+        )
+        let reversed = try #require(
+            engine.resolve(
+                symbol,
+                lookup: .resolved(Array(candidates.reversed())),
+                imports: ["App", "FeatureKit", "Foundation"],
+                currentModuleName: "App"
+            )
+        )
+
+        #expect(forward == reversed)
+        #expect(forward.originKind == .class)
+    }
+
+    private func usage(
+        _ name: String,
+        qualifiedName: String? = nil
+    ) -> SyntaxSymbolOccurrence {
         SyntaxSymbolOccurrence(
             symbolName: name,
-            fullyQualifiedName: nil,
+            fullyQualifiedName: qualifiedName,
             kind: .usage,
             location: SyntaxSymbolLocation(line: 1, column: 1),
             scopeChain: []
@@ -90,10 +190,11 @@ struct SymbolResolutionEngineTests {
     private func indexedSymbol(
         _ name: String,
         module: String,
-        kind: SymbolDefinitionKind
+        kind: SymbolDefinitionKind,
+        usrSuffix: String = ""
     ) -> IndexedSymbolOccurrence {
         IndexedSymbolOccurrence(
-            usr: "s:\(module).\(name)",
+            usr: "s:\(module).\(name).\(usrSuffix)",
             moduleName: module,
             isSystem: false,
             kind: kind

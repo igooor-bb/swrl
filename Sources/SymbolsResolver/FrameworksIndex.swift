@@ -42,12 +42,14 @@ final class FrameworksIndex {
         imports: Set<String>
     ) -> [SyntaxSymbolOccurrence: FrameworkSymbolLookup] {
         // We are looking only among frameworks that are listed in imports:
-        let frameworkDirectoryByName = frameworkDirectoryByName.filter { imports.contains($0.key) }
+        let frameworkDirectories = frameworkDirectoryByName
+            .filter { imports.contains($0.key) }
+            .sorted { lhs, rhs in
+                (lhs.key, lhs.value.path) < (rhs.key, rhs.value.path)
+            }
+        var lookupsBySymbolIdentifier: [String: [FrameworkSymbolLookup]] = [:]
 
-        var frameworkNameBySymbolIdentifier: [String: String] = [:]
-        var resolvedSymbolsByIdentifier: [String: SyntaxSymbolOccurrence] = [:]
-
-        for (frameworkName, frameworkDirectoryURL) in frameworkDirectoryByName {
+        for (frameworkName, frameworkDirectoryURL) in frameworkDirectories {
             let frameworkInterfaceFileURL = interfaceContentForFramework(frameworkName, at: frameworkDirectoryURL)
             guard let frameworkInterfaceFileURL else { continue }
 
@@ -55,22 +57,22 @@ final class FrameworksIndex {
             // We consider only definitions.
             let result = analyzer.findDefinitions(at: frameworkInterfaceFileURL)
             for item in result {
-                frameworkNameBySymbolIdentifier[item.symbolName] = frameworkName
-                resolvedSymbolsByIdentifier[item.symbolName] = item
+                lookupsBySymbolIdentifier[item.symbolName, default: []].append(
+                    FrameworkSymbolLookup(frameworkName: frameworkName, symbol: item)
+                )
             }
         }
 
         var resolvedSymbols: [SyntaxSymbolOccurrence: FrameworkSymbolLookup] = [:]
         for symbol in symbolsToResolve {
-            guard
-                let frameworkName = frameworkNameBySymbolIdentifier[symbol.symbolName],
-                let foundSymbol = resolvedSymbolsByIdentifier[symbol.symbolName]
-            else {
+            let candidates = lookupsBySymbolIdentifier[symbol.symbolName, default: []]
+                .sorted(by: lookupPrecedes)
+            let candidateFrameworks = Set(candidates.map(\.frameworkName))
+            guard candidateFrameworks.count == 1, let candidate = candidates.first else {
                 continue
             }
 
-            // TODO: Consider several occurrences.
-            resolvedSymbols[symbol] = FrameworkSymbolLookup(frameworkName: frameworkName, symbol: foundSymbol)
+            resolvedSymbols[symbol] = candidate
         }
 
         return resolvedSymbols
@@ -121,7 +123,11 @@ final class FrameworksIndex {
                 let resourceValues = try fileURL.resourceValues(forKeys: [.isDirectoryKey])
                 if resourceValues.isDirectory == true, fileURL.pathExtension == "framework" {
                     let frameworkName = fileURL.deletingPathExtension().lastPathComponent
-                    foundFrameworks[frameworkName] = fileURL
+                    if let existingURL = foundFrameworks[frameworkName] {
+                        foundFrameworks[frameworkName] = existingURL.path < fileURL.path ? existingURL : fileURL
+                    } else {
+                        foundFrameworks[frameworkName] = fileURL
+                    }
                 }
             } catch {
                 continue
@@ -129,5 +135,33 @@ final class FrameworksIndex {
         }
 
         return foundFrameworks
+    }
+
+    private func lookupPrecedes(_ lhs: FrameworkSymbolLookup, _ rhs: FrameworkSymbolLookup) -> Bool {
+        let lhsKind = lhs.symbol.kind.definitionKind?.rawValue ?? ""
+        let rhsKind = rhs.symbol.kind.definitionKind?.rawValue ?? ""
+        return (
+            lhs.frameworkName,
+            lhs.symbol.symbolName,
+            lhsKind,
+            lhs.symbol.location.line,
+            lhs.symbol.location.column
+        ) < (
+            rhs.frameworkName,
+            rhs.symbol.symbolName,
+            rhsKind,
+            rhs.symbol.location.line,
+            rhs.symbol.location.column
+        )
+    }
+}
+
+private extension SymbolOccurrenceKind {
+    var definitionKind: SymbolDefinitionKind? {
+        if case let .definition(kind) = self {
+            kind
+        } else {
+            nil
+        }
     }
 }
