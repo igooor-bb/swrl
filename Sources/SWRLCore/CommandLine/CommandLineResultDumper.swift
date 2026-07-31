@@ -3,36 +3,13 @@ import Foundation
 import SymbolsResolver
 import SyntaxAnalysis
 
-struct OutputModel: Encodable {
-    struct Declaration: Encodable {
-        let name: String
-        let type: String
-    }
-
-    struct Resolution: Encodable {
-        let symbol: String
-        let chain: String
-        let line: Int
-        let column: Int
-        let originType: String?
-        let originModuleType: String
-        let originModuleName: String?
-    }
-
-    let file: String
-    let module: String
-    let imports: [String]
-    let declarations: [Declaration]
-    let symbols: [Resolution]
-}
-
 final class CommandLineResultDumper {
-    func dump(_ models: [OutputModel], to file: InputFile) throws {
-        let jsonData = try encodeToJSON(models)
+    func dump(_ report: AnalysisReport, to file: InputFile) throws {
+        let jsonData = try encodeToJSON(report)
         try writeJSON(jsonData, to: file.url)
     }
 
-    private func encodeToJSON(_ data: some Encodable) throws -> Data {
+    func encodeToJSON(_ data: some Encodable) throws -> Data {
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes, .sortedKeys]
         return try encoder.encode(data)
@@ -48,7 +25,7 @@ final class CommandLineResultDumper {
 }
 
 extension FileAnalysisContext {
-    func dumpOutput() -> OutputModel {
+    func dumpOutput() -> AnalysisReport.File {
         let outputImports = imports.sorted()
         let outputDeclarations = declarations
             .sorted(by: SyntaxSymbolOccurrence.stableOrder)
@@ -62,8 +39,8 @@ extension FileAnalysisContext {
                 )
             }
 
-        return OutputModel(
-            file: file.url.path,
+        return AnalysisReport.File(
+            file: file.normalizedPath,
             module: moduleName,
             imports: outputImports,
             declarations: outputDeclarations,
@@ -71,16 +48,16 @@ extension FileAnalysisContext {
         )
     }
 
-    private func createDeclaration(from occ: SyntaxSymbolOccurrence) -> OutputModel.Declaration? {
+    private func createDeclaration(from occ: SyntaxSymbolOccurrence) -> AnalysisReport.Declaration? {
         guard let type = occ.kind.definitionType else { return nil }
-        return OutputModel.Declaration(name: occ.symbolName, type: type.rawValue)
+        return AnalysisReport.Declaration(name: occ.symbolName, type: type.rawValue)
     }
 
-    private func createOutputResolution(from resolution: SymbolResolution, currentModuleName: String) -> OutputModel.Resolution? {
+    private func createOutputResolution(from resolution: SymbolResolution, currentModuleName: String) -> AnalysisReport.Symbol? {
         let (moduleType, moduleName) = resolution.origin.moduleDetails(currentModuleName: currentModuleName)
         let type = resolution.originKind == .unknown ? nil : resolution.originKind
 
-        return OutputModel.Resolution(
+        return AnalysisReport.Symbol(
             symbol: resolution.targetSymbol.symbolName,
             chain: resolution.targetSymbol.scopeChain.joined(separator: "."),
             line: resolution.targetSymbol.location.line,

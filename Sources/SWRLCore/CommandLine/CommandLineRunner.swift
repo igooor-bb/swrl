@@ -68,11 +68,15 @@ public struct CommandLineRunner: AsyncParsableCommand {
         let totalFiles = try gatherFiles()
         logger.describeProcess(for: totalFiles)
 
-        let outputs = try await processFiles(totalFiles, resolver: resolver, logger: logger)
+        let processingResults = try await processFiles(totalFiles, resolver: resolver, logger: logger)
+        let report = AnalysisReportBuilder().build(
+            project: project,
+            processingResults: processingResults
+        )
 
         let dumper = CommandLineResultDumper()
         let outputFile = output ?? InputFile(path: Self.defaultOutputFileName)
-        try dumper.dump(outputs, to: outputFile)
+        try dumper.dump(report, to: outputFile)
 
         logger.printNewLine()
         logger.printSuccess("Success! Result is written to the file: \(outputFile.url.path)")
@@ -132,21 +136,19 @@ public struct CommandLineRunner: AsyncParsableCommand {
         _ files: [InputFile],
         resolver: SymbolsResolver,
         logger: Logger
-    ) async throws -> [OutputModel] {
+    ) async throws -> [FileProcessingResult] {
         let coordinator = AnalysisCoordinator()
         let processingResults = await coordinator.process(files: files) { file in
             let tool = CommandLineTool(resolver: resolver)
             return try await tool.processInputFile(file)
         }
 
-        var results: [OutputModel] = []
         for processingResult in processingResults {
             switch processingResult.outcome {
             case let .success(context):
                 try logger.displayFileSection(for: processingResult.file) {
                     context.printDescription(with: logger)
                 }
-                results.append(context.dumpOutput())
 
             case let .failure(error):
                 try logger.displayFileSection(for: processingResult.file) {
@@ -155,6 +157,6 @@ public struct CommandLineRunner: AsyncParsableCommand {
             }
         }
 
-        return results
+        return processingResults
     }
 }
