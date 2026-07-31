@@ -1,3 +1,8 @@
 import SWRLCore
 
-CommandLineRunner.main()
+@main
+enum SWRLMain {
+    static func main() async {
+        await CommandLineRunner.main()
+    }
+}
