@@ -25,8 +25,26 @@ struct CommandLineValidator {
 
     func validate(command: CommandLineRunner) throws {
         try validateProjectFile(command.project)
+        try validateInputSelection(command)
         try validateInputFiles(command.inputFiles)
+        try validatePatterns(command.patterns)
         try validateIndexOverrides(command)
+    }
+
+    func swiftFiles(matching pattern: String) throws -> [InputFile] {
+        let matchedFiles: [InputFile]
+        do {
+            matchedFiles = try globFiles(pattern: pattern)
+                .compactMap(InputFile.init)
+                .filter { $0.fileExtension.lowercased() == "swift" }
+        } catch {
+            throw ArgumentsValidationError.invalidArguments("Unable to evaluate pattern '\(pattern)': \(error)")
+        }
+
+        guard !matchedFiles.isEmpty else {
+            throw ArgumentsValidationError.invalidArguments("Pattern '\(pattern)' did not match any Swift files")
+        }
+        return matchedFiles
     }
 
     private func validateProjectFile(_ project: InputFile) throws {
@@ -41,6 +59,23 @@ struct CommandLineValidator {
     private func validateInputFiles(_ inputFiles: [InputFile]) throws {
         try inputFiles.forEach { inputFile in
             try validateFileExists(at: inputFile.url)
+            try validateFileExtension(
+                inputFile.url,
+                allowedExtensions: ["swift"],
+                errorMessage: "Input files must use the .swift extension"
+            )
+        }
+    }
+
+    private func validateInputSelection(_ command: CommandLineRunner) throws {
+        guard !command.inputFiles.isEmpty || !command.patterns.isEmpty else {
+            throw ArgumentsValidationError.invalidArguments("Provide at least one --file or --pattern")
+        }
+    }
+
+    private func validatePatterns(_ patterns: [String]) throws {
+        for pattern in patterns {
+            _ = try swiftFiles(matching: pattern)
         }
     }
 
@@ -78,7 +113,7 @@ struct CommandLineValidator {
         allowedExtensions: [String],
         errorMessage: String
     ) throws {
-        guard allowedExtensions.contains(url.pathExtension) else {
+        guard allowedExtensions.contains(url.pathExtension.lowercased()) else {
             throw ArgumentsValidationError.invalidArguments(errorMessage)
         }
     }

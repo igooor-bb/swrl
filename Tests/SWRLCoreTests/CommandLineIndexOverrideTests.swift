@@ -1,3 +1,4 @@
+import ArgumentParser
 import Foundation
 import Testing
 @testable import SWRLCore
@@ -53,10 +54,12 @@ struct CommandLineIndexOverrideTests {
         ])
         command.indexStore = InputFile(path: fixture.indexStore.path)
 
-        #expect(
-            throws: ArgumentsValidationError.invalidArguments("--derived-data and --index-store are mutually exclusive")
-        ) {
+        do {
             try command.validate()
+            Issue.record("Expected conflicting index overrides to fail validation")
+        } catch {
+            #expect(CommandLineRunner.exitCode(for: error) == .validationFailure)
+            #expect(String(describing: error).contains("--derived-data and --index-store are mutually exclusive"))
         }
     }
 
@@ -75,8 +78,12 @@ struct CommandLineIndexOverrideTests {
         command.derivedData = nil
         command.indexStore = InputFile(path: missingIndexStore.path)
 
-        #expect(throws: ArgumentsValidationError.fileDoesNotExist(missingIndexStore)) {
+        do {
             try command.validate()
+            Issue.record("Expected the missing index override to fail validation")
+        } catch {
+            #expect(CommandLineRunner.exitCode(for: error) == .validationFailure)
+            #expect(String(describing: error).contains(missingIndexStore.path))
         }
     }
 

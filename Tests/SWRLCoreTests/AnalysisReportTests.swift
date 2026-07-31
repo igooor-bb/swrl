@@ -56,6 +56,33 @@ struct AnalysisReportTests {
         #expect(Set(json.keys) == ["project", "summary", "files", "diagnostics"])
     }
 
+    @Test("Reports are atomically written into a newly created directory")
+    func writesReportAtomically() throws {
+        let root = FileManager.default.temporaryDirectory
+            .appendingPathComponent(UUID().uuidString, isDirectory: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let outputURL = root
+            .appendingPathComponent("Reports", isDirectory: true)
+            .appendingPathComponent("output.json")
+        let report = AnalysisReport(
+            project: "/tmp/App.xcodeproj",
+            summary: .init(requested: 1, succeeded: 1, failed: 0, unresolved: 0),
+            files: [],
+            diagnostics: []
+        )
+
+        try CommandLineResultDumper().dump(report, to: InputFile(path: outputURL.path))
+
+        let data = try Data(contentsOf: outputURL)
+        let json = try #require(JSONSerialization.jsonObject(with: data) as? [String: Any])
+        #expect(json["project"] as? String == "/tmp/App.xcodeproj")
+        let directoryContents = try FileManager.default.contentsOfDirectory(
+            at: outputURL.deletingLastPathComponent(),
+            includingPropertiesForKeys: nil
+        )
+        #expect(directoryContents.map(\.lastPathComponent) == ["output.json"])
+    }
+
     private func unknownResolution() -> SymbolResolution {
         let symbol = SyntaxSymbolOccurrence(
             symbolName: "MissingType",

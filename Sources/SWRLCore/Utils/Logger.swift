@@ -25,7 +25,8 @@ struct Logger: Sendable {
 
     private func log(_ message: String...) {
         guard !isMuted else { return }
-        print(message.joined(separator: " "))
+        let line = message.joined(separator: " ") + "\n"
+        FileHandle.standardError.write(Data(line.utf8))
     }
 
     func printGreeting() {

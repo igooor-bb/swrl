@@ -4,6 +4,12 @@ import SymbolsResolver
 import SyntaxAnalysis
 
 public struct CommandLineRunner: AsyncParsableCommand {
+    public static let configuration = CommandConfiguration(
+        commandName: "swrl",
+        abstract: "Analyze Swift symbol dependencies using an existing Xcode IndexStore.",
+        version: "0.1.0"
+    )
+
     // MARK: Constants
 
     private static let defaultOutputFileName = "output.json"
@@ -27,7 +33,7 @@ public struct CommandLineRunner: AsyncParsableCommand {
         name: [.customLong("pattern"), .customShort("p")],
         help: "Glob pattern describing target files to analyze."
     )
-    var pattern: String?
+    var patterns: [String] = []
 
     @Option(
         name: .customLong("derived-data"),
@@ -78,13 +84,26 @@ public struct CommandLineRunner: AsyncParsableCommand {
         let outputFile = output ?? InputFile(path: Self.defaultOutputFileName)
         try dumper.dump(report, to: outputFile)
 
+        let analysisExitCode = Self.analysisExitCode(for: report)
+        if !analysisExitCode.isSuccess {
+            throw analysisExitCode
+        }
+
         logger.printNewLine()
         logger.printSuccess("Success! Result is written to the file: \(outputFile.url.path)")
     }
 
     public func validate() throws {
         let validator = CommandLineValidator()
-        try validator.validate(command: self)
+        do {
+            try validator.validate(command: self)
+        } catch let error as ArgumentsValidationError {
+            throw ValidationError(error.description)
+        }
+    }
+
+    static func analysisExitCode(for report: AnalysisReport) -> ExitCode {
+        report.summary.failed == 0 ? .success : .failure
     }
 
     // MARK: Private Helpers
@@ -123,13 +142,19 @@ public struct CommandLineRunner: AsyncParsableCommand {
 
     private func gatherFiles() throws -> [InputFile] {
         var totalFiles = inputFiles
-        if let pattern {
-            let extraFiles = globFiles(pattern: pattern)
-                .compactMap(InputFile.init)
-                .filter { $0.fileExtension == "swift" }
-            totalFiles += extraFiles
+        for pattern in patterns {
+            do {
+                let extraFiles = try CommandLineValidator().swiftFiles(matching: pattern)
+                totalFiles += extraFiles
+            } catch let error as ArgumentsValidationError {
+                throw ValidationError(error.description)
+            }
         }
-        return totalFiles.sorted { $0.normalizedPath < $1.normalizedPath }
+
+        var seenPaths: Set<String> = []
+        return totalFiles
+            .sorted { $0.normalizedPath < $1.normalizedPath }
+            .filter { seenPaths.insert($0.normalizedPath).inserted }
     }
 
     private func processFiles(

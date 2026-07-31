@@ -20,7 +20,7 @@ final class CommandLineResultDumper {
         if !FileManager.default.fileExists(atPath: directory.path) {
             try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
         }
-        try data.write(to: url)
+        try data.write(to: url, options: .atomic)
     }
 }
 
