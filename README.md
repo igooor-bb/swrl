@@ -2,59 +2,56 @@
 
 [![CI](https://img.shields.io/github/actions/workflow/status/igooor-bb/swrl/ci.yml?branch=main&label=CI&logo=github)](https://github.com/igooor-bb/swrl/actions/workflows/ci.yml)
 [![Swift 6.0+](https://img.shields.io/badge/Swift-6.0%2B-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
-[![macOS 12+](https://img.shields.io/badge/macOS-12%2B-000000?logo=apple&logoColor=white)](https://developer.apple.com/macos/)
 [![MIT License](https://img.shields.io/github/license/igooor-bb/swrl)](https://github.com/igooor-bb/swrl/blob/main/LICENSE)
 
-`swrl` is a lightweight command-line symbol resolver for Swift projects built with Xcode. It parses source with SwiftSyntax, looks up definitions in IndexStoreDB, and classifies each reference as internal, external, system, or unresolved.
+`swrl` is a command-line symbol dependency analyzer for Swift projects. It shows what each source file declares, which symbols it uses, and where those symbols come from.
 
-The project must already be indexed by Xcode. `swrl` does not run `xcodebuild` or change the analyzed project.
+It works with an existing Xcode index: `swrl` never runs `xcodebuild` or modifies the project it analyzes.
 
-## Requirements
+## Quick start
+
+### Requirements
 
 - macOS 12 or later
-- Xcode with Swift 6.0 or newer and `libIndexStore`
+- Xcode with Swift 6.0 or later
 - [mise](https://mise.jdx.dev/) 2026.7.13 or later
 
-`swrl` uses Swift 6.0 or newer and `libIndexStore` from the selected Xcode. mise installs only SwiftFormat and SwiftLint. Select Xcode with `DEVELOPER_DIR` or `xcode-select` before running the tasks below.
-
-## Setup
+Clone, validate, and install the project:
 
 ```bash
 git clone https://github.com/igooor-bb/swrl.git
 cd swrl
 mise install --locked
 mise run doctor
-mise run check
-```
-
-`mise install --locked` installs the pinned SwiftFormat and SwiftLint versions. `doctor` checks for Swift 6.0 or newer, the active developer directory, and `libIndexStore`.
-
-Install the release executable into `~/.local/bin`:
-
-```bash
 mise run install
 ```
 
-Set `SWRL_INSTALL_DIR` to use another destination:
+The executable is installed to `~/.local/bin/swrl`. To choose another location, set `SWRL_INSTALL_DIR`:
 
 ```bash
 SWRL_INSTALL_DIR=/usr/local/bin mise run install
-SWRL_INSTALL_DIR=/usr/local/bin mise run uninstall
 ```
 
-## Preparing a project
+`swrl` uses the active Xcode. Select a different installation through `xcode-select` or `DEVELOPER_DIR` if needed.
 
-Build the `.xcodeproj` or `.xcworkspace` with the active Xcode before running `swrl`. The resulting IndexStore must contain a `DataStore` directory.
+## Analyze a project
 
-Without an override, `swrl` searches Xcode's configured DerivedData directory. It matches the project against `WorkspacePath` in each `info.plist` and uses the newest valid index. Locations are checked in this order:
+First, build the `.xcodeproj` or `.xcworkspace` in Xcode so its IndexStore is available. Then pass the project and at least one file or glob pattern:
 
-1. `--index-store <path>` — an IndexStore directory containing `DataStore`;
-2. `--derived-data <path>` — a DerivedData directory containing `Index.noindex/DataStore`;
-3. automatic DerivedData discovery.
+```bash
+swrl MyApp.xcodeproj --file Sources/AppDelegate.swift
+```
 
-All paths are normalized and may contain spaces.
+```bash
+swrl MyApp.xcworkspace \
+  --pattern 'Sources/Features/**/*.swift' \
+  --pattern 'Sources/Services/*.swift' \
+  --output reports/analysis.json
+```
 
-## Usage
+Files and patterns can be combined and repeated.
+
+### Command reference
 
 ```text
 swrl <project>
@@ -65,35 +62,34 @@ swrl <project>
   [--silent]
 ```
 
-At least one `--file` or `--pattern` is required. Both options can be repeated. Duplicate matches are analyzed once, and every pattern must match at least one Swift file.
+| Option | Short | Description |
+| --- | :---: | --- |
+| `--file <path>` | `-f` | Analyze a Swift file. Repeatable. |
+| `--pattern <glob>` | `-p` | Analyze files matching a glob. Repeatable. |
+| `--derived-data <path>` |  | Use a specific DerivedData directory. |
+| `--index-store <path>` |  | Use a specific Xcode index. |
+| `--output <path>` | `-o` | Write the report to this path. Defaults to `output.json`. |
+| `--silent` | `-s` | Suppress progress and diagnostic output. |
+
+Run `swrl --help` for built-in help or `swrl --version` for the installed version.
+
+### Using a specific index
+
+By default, `swrl` finds the matching index in Xcode's DerivedData directory. You can override it when the index is stored elsewhere:
 
 ```bash
-# Analyze one file using automatic DerivedData discovery.
-swrl MyApp.xcodeproj --file Sources/AppDelegate.swift
-
-# Combine files and multiple patterns.
-swrl MyApp.xcworkspace \
-  --file Sources/Model.swift \
-  --pattern 'Sources/Features/**/*.swift' \
-  --pattern 'Sources/Services/*.swift'
-
-# Use an explicit DerivedData directory and output path.
 swrl MyApp.xcodeproj \
   --pattern 'Sources/**/*.swift' \
-  --derived-data '/tmp/Derived Data/MyApp' \
-  --output reports/analysis.json
-
-# Use an IndexStore directly.
-swrl MyApp.xcodeproj \
-  --file Sources/AppDelegate.swift \
-  --index-store '/tmp/Index.noindex'
+  --derived-data '/tmp/Derived Data/MyApp'
 ```
 
-The default output path is `output.json`. Progress and diagnostics go to stderr; `--silent` suppresses progress output. Run `swrl --help` or `swrl --version` for command help and the installed version.
+Use `--derived-data` for a project-specific DerivedData directory or `--index-store` for a direct path to `Index.noindex`.
 
-## Report
+## Output
 
-The report keeps successful file results and records failures in `diagnostics`:
+During analysis, `swrl` prints a clear, structured view of the discovered declarations and symbol dependencies directly to the terminal. Use `--silent` when only the JSON report is needed.
+
+The JSON report contains the analyzed project, per-file declarations and symbol references, diagnostics, and a summary:
 
 ```json
 {
@@ -141,64 +137,46 @@ The report keeps successful file results and records failures in `diagnostics`:
 }
 ```
 
-Files, imports, declarations, symbols, diagnostics, and JSON keys have stable ordering. The output file is replaced atomically. Repeated runs against the same index produce the same bytes. An `unknown` symbol increments `summary.unresolved` but does not fail the file.
+Failed files appear in `diagnostics` while successful results remain in `files`. Unresolved symbols increase `summary.unresolved` but do not fail the analysis.
 
-Exit statuses:
+### Exit codes
 
 | Code | Meaning |
 | ---: | --- |
-| `0` | Every requested file was processed. Unresolved symbols are allowed. |
-| `1` | Environment or output error, or at least one file failed. Successful file results and diagnostics are still written for a partial analysis. |
-| `64` | Invalid arguments, including missing files, unsupported extensions, empty patterns, or conflicting index overrides. |
+| `0` | All requested files were processed; unresolved symbols are allowed. |
+| `1` | An environment or output error occurred, or at least one file failed. |
+| `64` | The command arguments are invalid. |
 
-## Developer tasks
+## Development
+
+Run the full validation suite before submitting changes:
+
+```bash
+mise install --locked
+mise run check
+```
+
+Useful tasks:
 
 | Command | Purpose |
 | --- | --- |
-| `mise run doctor` | Validate the active Xcode, Swift, and `libIndexStore`. |
-| `mise run format` | Format `Package.swift`, `Sources`, and `Tests`. |
-| `mise run format:check` | Check formatting without changing files. |
+| `mise run doctor` | Validate the active Xcode toolchain. |
+| `mise run format` | Format the package and Swift sources. |
 | `mise run lint` | Run SwiftLint in strict mode. |
 | `mise run test` | Run unit and integration tests. |
 | `mise run build` | Build the release executable. |
-| `mise run check` | Run doctor, formatting, lint, tests, and release build in order. |
+| `mise run check` | Run all project checks. |
 | `mise run clean` | Remove SwiftPM build artifacts. |
-| `mise run install` | Install the release executable. |
 | `mise run uninstall` | Remove the installed executable. |
-
-The integration test creates a real IndexStore with `swiftc`, so it uses the Xcode toolchain checked by `doctor`. CI runs `mise run check` on macOS with the committed lockfile.
 
 ## Troubleshooting
 
-### The active Xcode is wrong
-
-Check the selected toolchain, then rerun `doctor`:
-
-```bash
-xcode-select -p
-swift --version
-DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer mise run doctor
-```
-
-Use the same `DEVELOPER_DIR` while building the project and running `swrl`.
-
-### Project or DerivedData was not found
-
-Pass an existing `.xcodeproj` or `.xcworkspace`. If its path does not match `WorkspacePath` in DerivedData, pass the build directory with `--derived-data`.
-
-For a custom DerivedData root, configure it in Xcode or pass the individual build directory explicitly.
-
-### IndexStore does not contain DataStore
-
-Build the project in Xcode and check that `<DerivedData>/Index.noindex/DataStore` exists. If the index is elsewhere, pass its `Index.noindex` directory with `--index-store`.
-
-### Some files fail
-
-Check stderr and the report's `diagnostics`. A partial analysis exits with `1`, but successful results remain in `files`. Each source file must exist, use the `.swift` extension, and be present in the selected IndexStore.
-
-### Index database cache
-
-IndexStoreDB data is cached under `~/Library/Caches/swrl`. The cache key includes the normalized project path, IndexStore path, and active Xcode path.
+| Problem | What to check |
+| --- | --- |
+| Wrong Xcode is active | Run `xcode-select -p` and `swift --version`. Use the same `DEVELOPER_DIR` to build the project and run `swrl`. |
+| Project or DerivedData is not found | Verify the project path or pass its build directory with `--derived-data`. |
+| IndexStore is unavailable | Build the project in Xcode. If it uses a custom location, pass it with `--derived-data` or `--index-store`. |
+| Some files fail | Check stderr and `diagnostics`. Each file must exist, use the `.swift` extension, and be present in the selected index. |
 
 ## Contribution
 
@@ -216,4 +194,4 @@ Run `mise run check` before committing.
 
 ## License
 
-`swrl` is released under the MIT license. See [LICENSE](LICENSE) for details.
+swrl is available under the MIT license. See [LICENSE](LICENSE) file for more details.
