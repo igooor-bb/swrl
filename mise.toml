@@ -5,7 +5,7 @@ lockfile = true
 lockfile_platforms = ["macos-arm64", "macos-x64"]
 
 [tools]
-swiftformat = "0.62.1"
+swiftformat = { version = "0.62.1", no_app = true }
 swiftlint = "0.63.2"
 
 [tasks.doctor]
@@ -14,13 +14,16 @@ run = '''
 set -eu
 
 swift_version="$(swift --version)"
-case "$swift_version" in
-  *"Swift version 6.3"*) ;;
-  *)
-    echo "Expected Swift 6.3 from the active Xcode, but found: $swift_version" >&2
-    exit 1
-    ;;
-esac
+swift_major="$(printf '%s\n' "$swift_version" | sed -n 's/.*Swift version \([0-9][0-9]*\)\.[0-9][0-9]*.*/\1/p' | head -n 1)"
+if [ -z "$swift_major" ]; then
+  echo "Unable to determine the active Swift version from: $swift_version" >&2
+  exit 1
+fi
+
+if [ "$swift_major" -lt 6 ]; then
+  echo "Expected Swift 6.0 or newer from the active Xcode, but found: $swift_version" >&2
+  exit 1
+fi
 
 developer_dir="${DEVELOPER_DIR:-}"
 if [ -z "$developer_dir" ]; then

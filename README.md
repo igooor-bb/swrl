@@ -1,5 +1,10 @@
 # swrl
 
+[![CI](https://img.shields.io/github/actions/workflow/status/igooor-bb/swrl/ci.yml?branch=main&label=CI&logo=github)](https://github.com/igooor-bb/swrl/actions/workflows/ci.yml)
+[![Swift 6.0+](https://img.shields.io/badge/Swift-6.0%2B-F05138?logo=swift&logoColor=white)](https://www.swift.org/)
+[![macOS 12+](https://img.shields.io/badge/macOS-12%2B-000000?logo=apple&logoColor=white)](https://developer.apple.com/macos/)
+[![MIT License](https://img.shields.io/github/license/igooor-bb/swrl)](https://github.com/igooor-bb/swrl/blob/main/LICENSE)
+
 `swrl` is a lightweight command-line symbol resolver for Swift projects built with Xcode. It parses source with SwiftSyntax, looks up definitions in IndexStoreDB, and classifies each reference as internal, external, system, or unresolved.
 
 The project must already be indexed by Xcode. `swrl` does not run `xcodebuild` or change the analyzed project.
@@ -7,10 +12,10 @@ The project must already be indexed by Xcode. `swrl` does not run `xcodebuild` o
 ## Requirements
 
 - macOS 12 or later
-- Xcode with Swift 6.3 and `libIndexStore`
+- Xcode with Swift 6.0 or newer and `libIndexStore`
 - [mise](https://mise.jdx.dev/) 2026.7.13 or later
 
-`swrl` uses Swift 6.3 and `libIndexStore` from the selected Xcode. mise installs only SwiftFormat and SwiftLint. Select Xcode with `DEVELOPER_DIR` or `xcode-select` before running the tasks below.
+`swrl` uses Swift 6.0 or newer and `libIndexStore` from the selected Xcode. mise installs only SwiftFormat and SwiftLint. Select Xcode with `DEVELOPER_DIR` or `xcode-select` before running the tasks below.
 
 ## Setup
 
@@ -22,7 +27,7 @@ mise run doctor
 mise run check
 ```
 
-`mise install --locked` installs the pinned SwiftFormat and SwiftLint versions. `doctor` checks Swift 6.3, the active developer directory, and `libIndexStore`.
+`mise install --locked` installs the pinned SwiftFormat and SwiftLint versions. `doctor` checks for Swift 6.0 or newer, the active developer directory, and `libIndexStore`.
 
 Install the release executable into `~/.local/bin`:
 
